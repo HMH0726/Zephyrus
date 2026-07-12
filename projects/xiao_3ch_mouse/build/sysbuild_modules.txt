@@ -1,0 +1,1 @@
+"mcuboot":"C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/bootloader/mcuboot":"C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/bootloader/mcuboot/boot/zephyr/sysbuild"

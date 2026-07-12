@@ -1,0 +1,23 @@
+/ {
+    buttons {
+        compatible = "gpio-keys";
+        
+        /* 頻道切換按鈕 (D3) */
+        switch_btn: button_0 {
+            gpios = <&gpio0 3 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "Channel Switch Button";
+        };
+
+        /* 全清除按鈕 (D6) */
+        clear_btn: button_1 {
+            gpios = <&gpio1 11 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "Clear All Bonds Button";
+        };
+
+        /* 【新增】硬體健檢與核彈重置按鈕 (D4) */
+        diag_btn: button_2 {
+            gpios = <&gpio0 4 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "Diagnostic & Factory Reset Button";
+        };
+    };
+};

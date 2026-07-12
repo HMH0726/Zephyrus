@@ -1,0 +1,5 @@
+west:
+  command: D:\Users\ORESANJO\Downloads\Zephyrus\tools\python\Lib\site-packages\west\__main__.py
+    build -b xiao_ble/nrf52840
+  topdir: D:\Users\ORESANJO\Downloads\Zephyrus\workspace\zephyrproject
+  version: 1.5.0

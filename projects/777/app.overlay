@@ -1,0 +1,14 @@
+/ {
+    aliases {
+        sw0 = &button0;
+    };
+
+    buttons {
+        compatible = "gpio-keys";
+        button0: button_0 {
+            /* 預設綁定到 XIAO 的 D1 腳位 (P0.03) */
+            gpios = <&gpio0 3 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "User Button";
+        };
+    };
+};

@@ -1,0 +1,64 @@
+cmake:
+  application:
+    configuration-dir: 'C:/Users/KKINGWORK/Music/Zephyrus/projects/xiao_3ch_mouse'
+    source-dir: 'C:/Users/KKINGWORK/Music/Zephyrus/projects/xiao_3ch_mouse'
+  board:
+    name: 'xiao_ble'
+    path:
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr/boards/seeed/xiao_ble'
+    qualifiers: 'nrf52840'
+    revision: ''
+  devicetree:
+    bindings-dirs:
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr/dts/bindings'
+    files:
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr/boards/seeed/xiao_ble/xiao_ble.dts'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/projects/xiao_3ch_mouse/app.overlay'
+    include-dirs:
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/modules/hal/ambiq/dts'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/modules/hal/atmel/include'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/modules/hal/bouffalolab/include'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/modules/hal/bouffalolab/include/zephyr'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/modules/hal/gigadevice/include'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/modules/hal/microchip/include'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/modules/hal/microchip/dts'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/modules/hal/nuvoton/dts'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/modules/hal/nxp/dts'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/modules/hal/stm32/dts'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/modules/hal/ti/dts'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr/include'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr/dts/common'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr/dts/vendor'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr/dts/rx'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr/dts/x86'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr/dts/xtensa'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr/dts/sparc'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr/dts/riscv'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr/dts/posix'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr/dts/arm64'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr/dts/arm'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr/dts/arc'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr/dts'
+    user-files:
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/projects/xiao_3ch_mouse/app.overlay'
+  kconfig:
+    files:
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr/boards/seeed/xiao_ble/xiao_ble_defconfig'
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/projects/xiao_3ch_mouse/prj.conf'
+    user-files:
+     - 'C:/Users/KKINGWORK/Music/Zephyrus/projects/xiao_3ch_mouse/prj.conf'
+  toolchain:
+    name: 'zephyr'
+    path: 'C:/Users/KKINGWORK/Music/Zephyrus/tools/zephyr-sdk'
+  vendor-specific:
+    nordic:
+      svdfile: 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/modules/hal/nordic/nrfx/bsp/stable/mdk/nrf52840.svd'
+  zephyr:
+    version: '4.4.1'
+    zephyr-base: 'C:/Users/KKINGWORK/Music/Zephyrus/workspace/zephyrproject/zephyr'
+version: '0.1.0'
+west:
+  command: 'C:\Users\KKINGWORK\Music\Zephyrus\tools\python\Lib\site-packages\west\__main__.py build -b xiao_ble/nrf52840'
+  topdir: 'C:\Users\KKINGWORK\Music\Zephyrus\workspace\zephyrproject'
+  version: '1.5.0'

@@ -1,0 +1,40 @@
+patch_bytes = (
+    b"--- a/subsys/bluetooth/host/smp.c\n"
+    b"+++ b/subsys/bluetooth/host/smp.c\n"
+    b"@@ -1947,29 +1947,8 @@\n"
+    b" \tif (conflict) {\n"
+    b" \t\tLOG_DBG(\"New bond conflicts with a bond on id %d.\", conflict->id);\n"
+    b" \t}\n"
+    b" \n"
+    b"-\tif (conflict && !IS_ENABLED(CONFIG_BT_ID_UNPAIR_MATCHING_BONDS)) {\n"
+    b"-\t\tLOG_WRN(\"Refusing new pairing. The old bond must be unpaired first.\");\n"
+    b"-\t\treturn BT_SMP_ERR_AUTH_REQUIREMENTS;\n"
+    b"-\t}\n"
+    b"-\n"
+    b"-\tif (conflict && IS_ENABLED(CONFIG_BT_ID_UNPAIR_MATCHING_BONDS)) {\n"
+    b"-\t\tbool trust_ok;\n"
+    b"-\t\tint unpair_err;\n"
+    b"-\n"
+    b"-\t\ttrust_ok = update_keys_check(smp, conflict);\n"
+    b"-\t\tif (!trust_ok) {\n"
+    b"-\t\t\tLOG_WRN(\"Refusing new pairing. The old bond has more trust.\");\n"
+    b"-\t\t\treturn BT_SMP_ERR_AUTH_REQUIREMENTS;\n"
+    b"-\t\t}\n"
+    b"-\n"
+    b"-\t\tLOG_DBG(\"Un-pairing old conflicting bond and finalizing new.\");\n"
+    b"-\n"
+    b"-\t\tunpair_err = bt_unpair(conflict->id, &conflict->addr);\n"
+    b"-\t\t__ASSERT_NO_MSG(!unpair_err);\n"
+    b"-\t}\n"
+    b"-\n"
+    b"-\t__ASSERT_NO_MSG(!bt_id_find_conflict(new_bond));\n"
+    b"+\t/* [XIAO FIX] Allow Dual-Boot and Same-Phone pairing on different IDs */\n"
+    b" \tbt_id_add(new_bond);\n"
+    b" \treturn 0;\n"
+    b" }\n"
+)
+
+with open("0709/dual_boot_fix.patch", "wb") as f:
+    f.write(patch_bytes)
+
+print("[成功] 完美格式與精準行數的 dual_boot_fix.patch 已經重新生成！")
