@@ -1,2 +1,7 @@
-/tools/
-/workspace/
+# 忽略資料夾下的所有內容
+/tools/*
+/workspace/*
+
+# 反向排除（保留） .gitkeep 檔案，讓 Git 能追蹤到這兩個資料夾
+!/tools/.gitkeep
+!/workspace/.gitkeep
