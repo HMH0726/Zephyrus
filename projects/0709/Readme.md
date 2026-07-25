@@ -45,3 +45,12 @@
 ```cmd
 python 0709\make_patch.py
 rmdir /s /q build && west build -b xiao_ble/nrf52840
+```
+
+---
+
+## NOTE
+
+C8763
+
+---

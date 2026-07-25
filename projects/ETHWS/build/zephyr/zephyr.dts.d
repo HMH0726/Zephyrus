@@ -1,0 +1,35 @@
+empty_file.o: \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/misc/empty_file.c \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/boards/seeed/xiao_ble/xiao_ble.dts \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/boards/seeed/xiao_ble/xiao_ble_common.dtsi \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/dts/arm/nordic/nrf52840_qiaa.dtsi \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/dts/common/mem.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/dts/arm/nordic/nrf52840.dtsi \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/dts/arm/armv7-m.dtsi \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/dts/common/skeleton.dtsi \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/dts/vendor/nordic/nrf_common.dtsi \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/dt-bindings/adc/adc.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/dt-bindings/dt-util.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/sys/util_macro.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/sys/util_internal.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/sys/util_loops.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/sys/util_listify.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/sys/util_internal_is_eq.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/sys/util_internal_util_inc.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/sys/util_internal_util_dec.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/sys/util_internal_util_x2.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/dt-bindings/gpio/gpio.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/dt-bindings/i2c/i2c.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/dt-bindings/input/input-event-codes.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/dt-bindings/pinctrl/nrf-pinctrl.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/dt-bindings/pwm/pwm.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/dt-bindings/sensor/qdec_nrf.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/dts/common/freq.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/dts/arm/nordic/override.dtsi \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/dt-bindings/adc/nrf-saadc.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/dt-bindings/regulator/nrf5x.h \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/dts/vendor/nordic/nrf52840_partition_uf2_sdv7.dtsi \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/boards/seeed/xiao_ble/xiao_ble-pinctrl.dtsi \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/boards/seeed/xiao_ble/seeed_xiao_connector.dtsi \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/boards/common/usb/cdc_acm_serial.dtsi \
+ D:/Users/ORESANJO/Downloads/Zephyrus/projects/ETHWS/app.overlay

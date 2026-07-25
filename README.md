@@ -11,7 +11,7 @@ rmdir /s /q build && west build -b xiao_ble/nrf52840
 git -C "%ZEPHYR_BASE%" reset --hard
 git -C "%ZEPHYR_BASE%" clean -fd
 
-
+west build -p always
 
 <hr/>
 <h3>QQQ</h3>

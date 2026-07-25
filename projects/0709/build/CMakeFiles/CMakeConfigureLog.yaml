@@ -7767,8 +7767,8 @@ events:
     checks:
       - "Performing Test C_COMPILER_SUPPORTS_WFORMAT_SIGNEDNESS"
     directories:
-      source: "D:/Users/ORESANJO/Downloads/Zephyrus/projects/0709/build/CMakeFiles/CMakeScratch/TryCompile-tp3oaq"
-      binary: "D:/Users/ORESANJO/Downloads/Zephyrus/projects/0709/build/CMakeFiles/CMakeScratch/TryCompile-tp3oaq"
+      source: "D:/Users/ORESANJO/Downloads/Zephyrus/projects/0709/build/CMakeFiles/CMakeScratch/TryCompile-bsmfou"
+      binary: "D:/Users/ORESANJO/Downloads/Zephyrus/projects/0709/build/CMakeFiles/CMakeScratch/TryCompile-bsmfou"
     cmakeVariables:
       CMAKE_CXX_STDLIB_MODULES_JSON: ""
       CMAKE_C_FLAGS: ""
@@ -7779,11 +7779,11 @@ events:
       variable: "C_COMPILER_SUPPORTS_WFORMAT_SIGNEDNESS"
       cached: true
       stdout: |
-        Change Dir: 'D:/Users/ORESANJO/Downloads/Zephyrus/projects/0709/build/CMakeFiles/CMakeScratch/TryCompile-tp3oaq'
+        Change Dir: 'D:/Users/ORESANJO/Downloads/Zephyrus/projects/0709/build/CMakeFiles/CMakeScratch/TryCompile-bsmfou'
         
-        Run Build Command(s): D:/Users/ORESANJO/Downloads/Zephyrus/tools/ninja/ninja.exe -v cmTC_aadcd
-        [1/2] D:\\Users\\ORESANJO\\Downloads\\Zephyrus\\tools\\zephyr-sdk\\gnu\\arm-zephyr-eabi\\bin\\arm-zephyr-eabi-gcc.exe -DC_COMPILER_SUPPORTS_WFORMAT_SIGNEDNESS  -nostartfiles -nostdlib -isystem "D:/Users/ORESANJO/Downloads/Zephyrus/tools/zephyr-sdk/gnu/arm-zephyr-eabi/bin/../lib/gcc/arm-zephyr-eabi/14.3.0/include" -isystem "D:/Users/ORESANJO/Downloads/Zephyrus/tools/zephyr-sdk/gnu/arm-zephyr-eabi/bin/../lib/gcc/arm-zephyr-eabi/14.3.0/include" -Wl,--unresolved-symbols=ignore-in-object-files -Wl,--entry=0 -fuse-ld=bfd -std=c99   -Wformat-signedness -o CMakeFiles/cmTC_aadcd.dir/src.c.obj -c D:/Users/ORESANJO/Downloads/Zephyrus/projects/0709/build/CMakeFiles/CMakeScratch/TryCompile-tp3oaq/src.c
-        [2/2] C:\\WINDOWS\\system32\\cmd.exe /C "cd . && D:\\Users\\ORESANJO\\Downloads\\Zephyrus\\tools\\zephyr-sdk\\gnu\\arm-zephyr-eabi\\bin\\arm-zephyr-eabi-gcc.exe -nostartfiles -nostdlib -isystem "D:/Users/ORESANJO/Downloads/Zephyrus/tools/zephyr-sdk/gnu/arm-zephyr-eabi/bin/../lib/gcc/arm-zephyr-eabi/14.3.0/include" -isystem "D:/Users/ORESANJO/Downloads/Zephyrus/tools/zephyr-sdk/gnu/arm-zephyr-eabi/bin/../lib/gcc/arm-zephyr-eabi/14.3.0/include" -Wl,--unresolved-symbols=ignore-in-object-files -Wl,--entry=0 -fuse-ld=bfd  CMakeFiles/cmTC_aadcd.dir/src.c.obj -o cmTC_aadcd   && cd ."
+        Run Build Command(s): D:/Users/ORESANJO/Downloads/Zephyrus/tools/ninja/ninja.exe -v cmTC_d3669
+        [1/2] D:\\Users\\ORESANJO\\Downloads\\Zephyrus\\tools\\zephyr-sdk\\gnu\\arm-zephyr-eabi\\bin\\arm-zephyr-eabi-gcc.exe -DC_COMPILER_SUPPORTS_WFORMAT_SIGNEDNESS  -nostartfiles -nostdlib -isystem "D:/Users/ORESANJO/Downloads/Zephyrus/tools/zephyr-sdk/gnu/arm-zephyr-eabi/bin/../lib/gcc/arm-zephyr-eabi/14.3.0/include" -isystem "D:/Users/ORESANJO/Downloads/Zephyrus/tools/zephyr-sdk/gnu/arm-zephyr-eabi/bin/../lib/gcc/arm-zephyr-eabi/14.3.0/include" -Wl,--unresolved-symbols=ignore-in-object-files -Wl,--entry=0 -fuse-ld=bfd -std=c99   -Wformat-signedness -o CMakeFiles/cmTC_d3669.dir/src.c.obj -c D:/Users/ORESANJO/Downloads/Zephyrus/projects/0709/build/CMakeFiles/CMakeScratch/TryCompile-bsmfou/src.c
+        [2/2] C:\\WINDOWS\\system32\\cmd.exe /C "cd . && D:\\Users\\ORESANJO\\Downloads\\Zephyrus\\tools\\zephyr-sdk\\gnu\\arm-zephyr-eabi\\bin\\arm-zephyr-eabi-gcc.exe -nostartfiles -nostdlib -isystem "D:/Users/ORESANJO/Downloads/Zephyrus/tools/zephyr-sdk/gnu/arm-zephyr-eabi/bin/../lib/gcc/arm-zephyr-eabi/14.3.0/include" -isystem "D:/Users/ORESANJO/Downloads/Zephyrus/tools/zephyr-sdk/gnu/arm-zephyr-eabi/bin/../lib/gcc/arm-zephyr-eabi/14.3.0/include" -Wl,--unresolved-symbols=ignore-in-object-files -Wl,--entry=0 -fuse-ld=bfd  CMakeFiles/cmTC_d3669.dir/src.c.obj -o cmTC_d3669   && cd ."
         
       exitCode: 0
   -
