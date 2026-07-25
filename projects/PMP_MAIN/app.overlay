@@ -1,14 +1,18 @@
 / {
     aliases {
-        sw0 = &button0;
+        usbd0 = &zephyr_udc0;
     };
+};
 
-    buttons {
-        compatible = "gpio-keys";
-        button0: button_0 {
-            /* 預設綁定到 XIAO 的 D1 腳位 (P0.03) */
-            gpios = <&gpio0 3 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
-            label = "User Button";
-        };
+&zephyr_udc0 {
+    status = "okay";
+    cdc_ncm_0: cdc_ncm_0 {
+        compatible = "zephyr,cdc-ncm-ethernet";
+        zephyr,random-mac-address; 
+        
+        /* 🚀 換成你專屬的 02 開頭虛擬 MAC */
+        remote-mac-address = "02badc0ffee0"; 
+        
+        status = "okay";
     };
 };

@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 3.20.0)
 # 尋找 Zephyr 核心
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
-project(PMP_MAIN)
+project(ETHWS)
 
 # 指定主程式原始碼位置
 target_sources(app PRIVATE src/main.c)
+generate_inc_file_for_target(app src/index.html ${ZEPHYR_BINARY_DIR}/include/generated/index.html.inc)

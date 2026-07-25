@@ -1,0 +1,33 @@
+--- a/subsys/bluetooth/host/smp.c
++++ b/subsys/bluetooth/host/smp.c
+@@ -1947,29 +1947,8 @@
+ 	if (conflict) {
+ 		LOG_DBG("New bond conflicts with a bond on id %d.", conflict->id);
+ 	}
+ 
+-	if (conflict && !IS_ENABLED(CONFIG_BT_ID_UNPAIR_MATCHING_BONDS)) {
+-		LOG_WRN("Refusing new pairing. The old bond must be unpaired first.");
+-		return BT_SMP_ERR_AUTH_REQUIREMENTS;
+-	}
+-
+-	if (conflict && IS_ENABLED(CONFIG_BT_ID_UNPAIR_MATCHING_BONDS)) {
+-		bool trust_ok;
+-		int unpair_err;
+-
+-		trust_ok = update_keys_check(smp, conflict);
+-		if (!trust_ok) {
+-			LOG_WRN("Refusing new pairing. The old bond has more trust.");
+-			return BT_SMP_ERR_AUTH_REQUIREMENTS;
+-		}
+-
+-		LOG_DBG("Un-pairing old conflicting bond and finalizing new.");
+-
+-		unpair_err = bt_unpair(conflict->id, &conflict->addr);
+-		__ASSERT_NO_MSG(!unpair_err);
+-	}
+-
+-	__ASSERT_NO_MSG(!bt_id_find_conflict(new_bond));
++	/* [XIAO FIX] Allow Dual-Boot and Same-Phone pairing on different IDs */
+ 	bt_id_add(new_bond);
+ 	return 0;
+ }
