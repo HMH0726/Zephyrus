@@ -279,7 +279,7 @@ CMAKE_PROJECT_DESCRIPTION:STATIC=
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=ETHWS
+CMAKE_PROJECT_NAME:STATIC=PMP
 
 //Value Computed by CMake
 CMAKE_PROJECT_SPDX_LICENSE:STATIC=
@@ -386,15 +386,6 @@ DTC:FILEPATH=D:/Users/ORESANJO/Downloads/Zephyrus/tools/cmake/bin/dtc.exe
 // dts2.overlay"
 DTC_OVERLAY_FILE:STRING=D:/Users/ORESANJO/Downloads/Zephyrus/projects/PMP_MAIN/app.overlay
 
-//Value Computed by CMake
-ETHWS_BINARY_DIR:STATIC=D:/Users/ORESANJO/Downloads/Zephyrus/projects/PMP_MAIN/build
-
-//Value Computed by CMake
-ETHWS_IS_TOP_LEVEL:STATIC=ON
-
-//Value Computed by CMake
-ETHWS_SOURCE_DIR:STATIC=D:/Users/ORESANJO/Downloads/Zephyrus/projects/PMP_MAIN
-
 //Path to a program.
 GEN_KOBJECT_LIST:FILEPATH=D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/scripts/build/gen_kobject_list.py
 
@@ -451,6 +442,18 @@ OPENOCD:FILEPATH=D:/Users/ORESANJO/Downloads/Zephyrus/tools/zephyr-sdk/hosttools
 
 //Path to a program.
 PAHOLE:FILEPATH=PAHOLE-NOTFOUND
+
+//Path to a program.
+PATCH_EXECUTABLE:FILEPATH=PATCH_EXECUTABLE-NOTFOUND
+
+//Value Computed by CMake
+PMP_BINARY_DIR:STATIC=D:/Users/ORESANJO/Downloads/Zephyrus/projects/PMP_MAIN/build
+
+//Value Computed by CMake
+PMP_IS_TOP_LEVEL:STATIC=ON
+
+//Value Computed by CMake
+PMP_SOURCE_DIR:STATIC=D:/Users/ORESANJO/Downloads/Zephyrus/projects/PMP_MAIN
 
 //Path to a program.
 PTY_INTERFACE:FILEPATH=PTY_INTERFACE-NOTFOUND
@@ -801,6 +804,4 @@ _Python3_INTERPRETER_SIGNATURE:INTERNAL=b8daf80905b4c3e016036aaaa7a67805
 _Python3_Interpreter_REASON_FAILURE:INTERNAL=
 //NumPy reason failure
 _Python3_NumPy_REASON_FAILURE:INTERNAL=
-//Test check_fmacro_prefix_map_D__Users_ORESANJO_Downloads_Zephyrus_projects_PMP_MAIN_CMAKE_SOURCE_DIR_C__nostartfiles__nostdlib__isystem__D__Users_ORESANJO_Downloads_Zephyrus_tools_zephyr_sdk_gnu_arm_zephyr_eabi_bin____lib_gcc_arm_zephyr_eabi_14_3_0_include___isystem__D__Users_ORESANJO_Downloads_Zephyrus_tools_zephyr_sdk_gnu_arm_zephyr_eabi_bin____lib_gcc_arm_zephyr_eabi_14_3_0_include___Wl___unresolved_symbols_ignore_in_object_files__Wl___entry_0__fuse_ld_bfd
-check_fmacro_prefix_map_D__Users_ORESANJO_Downloads_Zephyrus_projects_PMP_MAIN_CMAKE_SOURCE_DIR_C__nostartfiles__nostdlib__isystem__D__Users_ORESANJO_Downloads_Zephyrus_tools_zephyr_sdk_gnu_arm_zephyr_eabi_bin____lib_gcc_arm_zephyr_eabi_14_3_0_include___isystem__D__Users_ORESANJO_Downloads_Zephyrus_tools_zephyr_sdk_gnu_arm_zephyr_eabi_bin____lib_gcc_arm_zephyr_eabi_14_3_0_include___Wl___unresolved_symbols_ignore_in_object_files__Wl___entry_0__fuse_ld_bfd:INTERNAL=1
 

@@ -1161,6 +1161,29 @@ zephyr_udc0: &usbd {
     aliases {
         usbd0 = &zephyr_udc0;
     };
+
+    buttons {
+        compatible = "gpio-keys";
+
+
+        switch_btn: button_0 {
+            gpios = <&gpio0 3 ((1 << 4) | (1 << 0))>;
+            label = "Channel Switch Button";
+        };
+
+
+        clear_btn: button_1 {
+            gpios = <&gpio1 11 ((1 << 4) | (1 << 0))>;
+            label = "Clear All Bonds Button";
+        };
+
+
+        diag_btn: button_2 {
+            gpios = <&gpio0 4 ((1 << 4) | (1 << 0))>;
+            label = "Diagnostic & Factory Reset Button";
+        };
+    };
+
 };
 
 &zephyr_udc0 {

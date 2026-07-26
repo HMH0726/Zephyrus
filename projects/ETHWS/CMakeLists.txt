@@ -1,3 +1,4 @@
+# ETHWS
 cmake_minimum_required(VERSION 3.20.0)
 
 # 尋找 Zephyr 核心

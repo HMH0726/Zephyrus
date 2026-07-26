@@ -609,19 +609,19 @@
 			num-isoin-endpoints = < 0x1 >;  /* in zephyr\dts\arm\nordic\nrf52840.dtsi:521 */
 			num-isoout-endpoints = < 0x1 >; /* in zephyr\dts\arm\nordic\nrf52840.dtsi:522 */
 			compatible = "nordic,nrf-usbd"; /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:144 */
-			status = "okay";                /* in ..\..\projects\PMP_MAIN\app.overlay:8 */
+			status = "okay";                /* in ..\..\projects\PMP_MAIN\app.overlay:31 */
 
 			/* node '/soc/usbd@40027000/board_cdc_acm_uart' defined in zephyr\boards\common\usb\cdc_acm_serial.dtsi:18 */
 			board_cdc_acm_uart: board_cdc_acm_uart {
 				compatible = "zephyr,cdc-acm-uart"; /* in zephyr\boards\common\usb\cdc_acm_serial.dtsi:19 */
 			};
 
-			/* node '/soc/usbd@40027000/cdc_ncm_0' defined in ..\..\projects\PMP_MAIN\app.overlay:9 */
+			/* node '/soc/usbd@40027000/cdc_ncm_0' defined in ..\..\projects\PMP_MAIN\app.overlay:32 */
 			cdc_ncm_0: cdc_ncm_0 {
-				compatible = "zephyr,cdc-ncm-ethernet"; /* in ..\..\projects\PMP_MAIN\app.overlay:10 */
-				zephyr,random-mac-address;              /* in ..\..\projects\PMP_MAIN\app.overlay:11 */
-				remote-mac-address = "02badc0ffee0";    /* in ..\..\projects\PMP_MAIN\app.overlay:14 */
-				status = "okay";                        /* in ..\..\projects\PMP_MAIN\app.overlay:16 */
+				compatible = "zephyr,cdc-ncm-ethernet"; /* in ..\..\projects\PMP_MAIN\app.overlay:33 */
+				zephyr,random-mac-address;              /* in ..\..\projects\PMP_MAIN\app.overlay:34 */
+				remote-mac-address = "02badc0ffee0";    /* in ..\..\projects\PMP_MAIN\app.overlay:37 */
+				status = "okay";                        /* in ..\..\projects\PMP_MAIN\app.overlay:39 */
 			};
 		};
 
@@ -1028,6 +1028,29 @@
 		/* node '/pwmleds/pwm_led_0' defined in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:40 */
 		pwm_led0: pwm_led_0 {
 			pwms = < &pwm0 0x0 0x1312d00 0x1 >; /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:41 */
+		};
+	};
+
+	/* node '/buttons' defined in ..\..\projects\PMP_MAIN\app.overlay:6 */
+	buttons {
+		compatible = "gpio-keys"; /* in ..\..\projects\PMP_MAIN\app.overlay:7 */
+
+		/* node '/buttons/button_0' defined in ..\..\projects\PMP_MAIN\app.overlay:10 */
+		switch_btn: button_0 {
+			gpios = < &gpio0 0x3 0x11 >;     /* in ..\..\projects\PMP_MAIN\app.overlay:11 */
+			label = "Channel Switch Button"; /* in ..\..\projects\PMP_MAIN\app.overlay:12 */
+		};
+
+		/* node '/buttons/button_1' defined in ..\..\projects\PMP_MAIN\app.overlay:16 */
+		clear_btn: button_1 {
+			gpios = < &gpio1 0xb 0x11 >;      /* in ..\..\projects\PMP_MAIN\app.overlay:17 */
+			label = "Clear All Bonds Button"; /* in ..\..\projects\PMP_MAIN\app.overlay:18 */
+		};
+
+		/* node '/buttons/button_2' defined in ..\..\projects\PMP_MAIN\app.overlay:22 */
+		diag_btn: button_2 {
+			gpios = < &gpio0 0x4 0x11 >;                 /* in ..\..\projects\PMP_MAIN\app.overlay:23 */
+			label = "Diagnostic & Factory Reset Button"; /* in ..\..\projects\PMP_MAIN\app.overlay:24 */
 		};
 	};
 };

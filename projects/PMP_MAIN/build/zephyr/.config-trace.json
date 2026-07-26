@@ -44,6 +44,17 @@
     ]
   ],
   [
+    "CONFIG_DT_HAS_GPIO_KEYS_ENABLED",
+    "n",
+    "bool",
+    "y",
+    "default",
+    [
+      "D:/Users/ORESANJO/Downloads/Zephyrus/projects/PMP_MAIN/build/Kconfig/Kconfig.dts",
+      3253
+    ]
+  ],
+  [
     "CONFIG_DT_HAS_GPIO_LEDS_ENABLED",
     "n",
     "bool",

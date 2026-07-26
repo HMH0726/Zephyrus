@@ -1,6 +1,7 @@
+# xiao_mouse AKA 07069
 cmake_minimum_required(VERSION 3.20.0)
 
-# --- 【神級外掛】在編譯前自動將雙系統/同手機放行補丁打入 Zephyr ---
+# --- Find patch (Dual Boot) ---
 find_program(PATCH_EXECUTABLE patch)
 if(PATCH_EXECUTABLE)
     execute_process(
