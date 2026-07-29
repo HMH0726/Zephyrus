@@ -86,20 +86,23 @@
                 .finally(() => setTimeout(() => btns.forEach(b => b.disabled = false), 100));
         }
 
-        /* 離開視窗的功能 (包含優雅的備用方案) */
+        /* 離開視窗的功能：發送 /exit 請求給板子，然後關閉視窗 */
         function closeWindow() {
-            /* 1. 先嘗試用系統腳本關閉 (手機彈窗通常會在這裡成功關閉) */
-            window.open('', '_self').close();
-            
-            /* 2. 備用方案：如果 0.3 秒後視窗還活著 (代表瀏覽器阻止了關閉) */
-            setTimeout(() => {
-                document.body.innerHTML = `
-                    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh;">
-                        <h2 style="color: #4CAF50;">設定已完成</h2>
-                        <p style="color: #aaa;">您可以安全地關閉此分頁了</p>
-                    </div>
-                `;
-            }, 300);
+            // 1. 先發送關閉網路卡的請求
+            fetch('/exit').then(() => {
+                // 2. 請求成功後，嘗試用系統腳本關閉視窗
+                window.open('', '_self').close();
+                
+                // 3. 備用方案：如果 0.3 秒後視窗還活著 (代表瀏覽器阻止了關閉)
+                setTimeout(() => {
+                    document.body.innerHTML = `
+                        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh;">
+                            <h2 style="color: #4CAF50;">安全關閉</h2>
+                            <p style="color: #aaa;">設備網路卡已成功關閉並切換回純藍牙模式。<br>您可以安全地關閉此分頁了。</p>
+                        </div>
+                    `;
+                }, 300);
+            }).catch(err => console.log('關閉請求發送失敗'));
         }
     </script>
 </body>

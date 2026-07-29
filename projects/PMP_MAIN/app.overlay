@@ -2,29 +2,29 @@
     aliases {
         usbd0 = &zephyr_udc0;
     };
-	
+    
+    /* 按鈕配置：CH_Switch(D1) / ALL_CLR(D6) / Edit_Mode(D7) */
     buttons {
         compatible = "gpio-keys";
         
-        /* 頻道切換按鈕 (D3) */
+        /* 頻道切換按鈕 (對應板子實體引腳 D1，晶片腳位 P0.03) */
         switch_btn: button_0 {
             gpios = <&gpio0 3 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
             label = "Channel Switch Button";
         };
 
-        /* 全清除按鈕 (D6) */
+        /* 物理層核彈抹除按鈕 (對應板子實體引腳 D6，晶片腳位 P1.11) */
         clear_btn: button_1 {
             gpios = <&gpio1 11 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
             label = "Clear All Bonds Button";
         };
 
-        /* 【新增】硬體健檢與核彈重置按鈕 (D4) */
-        diag_btn: button_2 {
-            gpios = <&gpio0 4 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
-            label = "Diagnostic & Factory Reset Button";
+        /* 編輯模式觸發按鈕 (對應板子實體引腳 D7，晶片腳位 P1.12) */
+        editmode_btn: button_2 {
+            gpios = <&gpio1 12 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            label = "Edit Mode Button";
         };
     };
-	
 };
 
 &zephyr_udc0 {
@@ -33,7 +33,7 @@
         compatible = "zephyr,cdc-ncm-ethernet";
         zephyr,random-mac-address; 
         
-        /* 🚀 換成你專屬的 02 開頭虛擬 MAC */
+        /* 虛擬網卡 MAC 位址 (BADCOFFEE) */
         remote-mac-address = "02badc0ffee0"; 
         
         status = "okay";

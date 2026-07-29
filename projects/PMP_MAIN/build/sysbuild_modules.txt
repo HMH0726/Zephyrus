@@ -1,1 +1,0 @@
-"mcuboot":"D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/bootloader/mcuboot":"D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/bootloader/mcuboot/boot/zephyr/sysbuild"

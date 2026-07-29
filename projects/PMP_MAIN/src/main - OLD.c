@@ -39,12 +39,8 @@ static struct gpio_callback button_cb_data;
 static const struct gpio_dt_spec clr_button = GPIO_DT_SPEC_GET(DT_NODELABEL(clear_btn), gpios);
 static struct gpio_callback clr_button_cb_data;
 
-/* 新增：編輯模式按鈕 (D7) */
-static const struct gpio_dt_spec editmode_button = GPIO_DT_SPEC_GET(DT_NODELABEL(editmode_btn), gpios);
-static struct gpio_callback editmode_button_cb_data;
-
 /* =========================================================
- * 【狀態控制與防彈跳變數】
+ * 【藍牙狀態與防彈跳變數】
  * ========================================================= */
 // 儲存 Zephyr 內部用於識別不同 MAC 位址的 Identity ID
 static uint8_t channel_ids[CH_COUNT] = {0, 1, 2};
@@ -52,16 +48,13 @@ static uint8_t current_channel = 0;             // 目前使用的頻道 (0, 1, 
 static struct bt_conn *current_conn = NULL;     // 目前的藍牙連線物件指標
 static int64_t last_button_time = 0;            // 記錄上一次按下切換鍵的時間 (用於防彈跳)
 static int64_t last_clr_button_time = 0;        // 記錄上一次按下清除鍵的時間 (用於防彈跳)
-static int64_t last_editmode_button_time = 0;   // 記錄上一次按下編輯模式鍵的時間
 
 static bool volatile is_switching = false;      // 狀態旗標：標記目前是否正在進行頻道切換流程
 
-/* 🛡️ 新增：編輯模式同步事件與旗標 (用於喚醒背景執行緒) */
-K_EVENT_DEFINE(edit_mode_event);
-volatile bool is_edit_mode = false;
-
 /* =========================================================
  * 【關鍵防護：背景排程器 (Workqueue) 宣告】
+ * 說明：中斷服務常式 (ISR) 內不能執行耗時操作，因此將切換頻道、
+ * 廣播、清除 Flash 等動作交給系統背景執行緒安全處理。
  * ========================================================= */
 static void switch_channel_work_handler(struct k_work *work);
 K_WORK_DEFINE(switch_channel_work, switch_channel_work_handler); // 負責斷線並啟動切換
@@ -78,29 +71,48 @@ K_WORK_DEFINE(restart_adv_work, restart_adv_work_handler); // 負責在非預期
 
 //------------------------------------------------------- BTKeyboard (藍牙鍵盤/滑鼠設定區)
 
+/* =========================================================
+ * 【NVS (非揮發性記憶體) 儲存回呼】
+ * 說明：系統啟動時，Zephyr Settings 子系統會呼叫此函式，
+ * 將存放在 Flash 中的頻道紀錄 (ch) 與身分 ID (ids) 讀取回 RAM。
+ * ========================================================= */
 static int app_settings_set(const char *name, size_t len, settings_read_cb read_cb, void *cb_arg) {
     if (strcmp(name, "ch") == 0) { read_cb(cb_arg, &current_channel, sizeof(current_channel)); return 0; }
     if (strcmp(name, "ids") == 0) { read_cb(cb_arg, channel_ids, sizeof(channel_ids)); return 0; }
     return -ENOENT;
 }
+// 註冊 app 命名空間的設定處理器
 SETTINGS_STATIC_HANDLER_DEFINE(app_settings, "app", NULL, app_settings_set, NULL, NULL);
 
+/* =========================================================
+ * 【GATT HID (Human Interface Device) 服務定義】
+ * 說明：定義藍牙滑鼠/鍵盤的描述檔 (Report Map)。
+ * 這告訴手機或電腦這是一個什麼樣的輸入設備。
+ * ========================================================= */
+// HID 報告映射表 (此處為極簡的滑鼠/按鍵描述宣告)
 static const uint8_t hid_report_map[] = { 0x05, 0x01, 0x09, 0x02, 0xa1, 0x01, 0xc0 };
 struct hids_info { uint16_t version; uint8_t code; uint8_t flags; } __packed;
-static struct hids_info info = { .version = 0x0111, .code = 0x00, .flags = BIT(1) }; 
+static struct hids_info info = { .version = 0x0111, .code = 0x00, .flags = BIT(1) }; // HID 版本與標記
 
+// HID 特徵值讀取的回呼函式
 static ssize_t read_info(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset) { return bt_gatt_attr_read(conn, attr, buf, len, offset, attr->user_data, sizeof(struct hids_info)); }
 static ssize_t read_report_map(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset) { return bt_gatt_attr_read(conn, attr, buf, len, offset, hid_report_map, sizeof(hid_report_map)); }
 static ssize_t read_input_report(struct bt_conn *conn, const struct bt_gatt_attr *attr, void *buf, uint16_t len, uint16_t offset) { return bt_gatt_attr_read(conn, attr, buf, len, offset, NULL, 0); }
 
+// 宣告 HIDS (HID Service) 服務及其特徵值
 BT_GATT_SERVICE_DEFINE(hog_svc,
-    BT_GATT_PRIMARY_SERVICE(BT_UUID_HIDS), 
+    BT_GATT_PRIMARY_SERVICE(BT_UUID_HIDS), // 定義主要服務為 HID
     BT_GATT_CHARACTERISTIC(BT_UUID_HIDS_INFO, BT_GATT_CHRC_READ, BT_GATT_PERM_READ, read_info, NULL, &info),
     BT_GATT_CHARACTERISTIC(BT_UUID_HIDS_REPORT_MAP, BT_GATT_CHRC_READ, BT_GATT_PERM_READ, read_report_map, NULL, NULL),
     BT_GATT_CHARACTERISTIC(BT_UUID_HIDS_REPORT, BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY, BT_GATT_PERM_READ_ENCRYPT, read_input_report, NULL, NULL),
-    BT_GATT_CCC(NULL, BT_GATT_PERM_READ_ENCRYPT | BT_GATT_PERM_WRITE_ENCRYPT) 
+    BT_GATT_CCC(NULL, BT_GATT_PERM_READ_ENCRYPT | BT_GATT_PERM_WRITE_ENCRYPT) // 客戶端特徵配置，允許通知
 );
 
+/* =========================================================
+ * 【藍牙廣播資料 (Advertising Data) 設定】
+ * 說明：三個頻道有各自獨立的藍牙名稱與設定。
+ * 附帶 UUID 0x1812 (HID) 與外觀 0x03C2 (Mouse)，避免被手機隱藏。
+ * ========================================================= */
 static const struct bt_data ad_ch0[] = { 
     BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)), 
     BT_DATA_BYTES(BT_DATA_UUID16_ALL, 0x12, 0x18), 
@@ -122,133 +134,182 @@ static const struct bt_data ad_ch2[] = {
 static const struct bt_data *ad_lists[CH_COUNT] = {ad_ch0, ad_ch1, ad_ch2};
 static const size_t ad_sizes[CH_COUNT] = {ARRAY_SIZE(ad_ch0), ARRAY_SIZE(ad_ch1), ARRAY_SIZE(ad_ch2)};
 
+/* =========================================================
+ * 【啟動藍牙廣播函式】
+ * 根據目前的頻道，使用對應的身分 (Identity ID) 發送廣播訊號
+ * ========================================================= */
 static void start_adv_for_current_channel(void) {
-    bt_le_adv_stop(); 
+    bt_le_adv_stop(); // 先停止當前廣播
+
     struct bt_le_adv_param adv_param = {
-        .id = channel_ids[current_channel], 
-        .options = BT_LE_ADV_OPT_CONN | BT_LE_ADV_OPT_USE_IDENTITY, 
-        .interval_min = BT_GAP_ADV_FAST_INT_MIN_2, 
+        .id = channel_ids[current_channel], // 使用對應頻道的底層 ID
+        .options = BT_LE_ADV_OPT_CONN | BT_LE_ADV_OPT_USE_IDENTITY, // 允許連線並使用指定身分
+        .interval_min = BT_GAP_ADV_FAST_INT_MIN_2, // 廣播間隔設定
         .interval_max = BT_GAP_ADV_FAST_INT_MAX_2,
     };
+    
     int err = bt_le_adv_start(&adv_param, ad_lists[current_channel], ad_sizes[current_channel], NULL, 0);
     if (!err) printk("\n[ 頻道 %d ] 正在廣播滑鼠訊號... (底層ID: %d)\n", current_channel + 1, channel_ids[current_channel]);
     else printk("\n[ 錯誤 ] 廣播失敗 (err %d)\n", err);
 }
 
+/* =========================================================
+ * 【安全重啟廣播排程】
+ * 說明：加上微小延遲以修復藍牙底層可能發生的 err -12 錯誤。
+ * ========================================================= */
 static void restart_adv_work_handler(struct k_work *work) {
     k_sleep(K_MSEC(200)); 
     start_adv_for_current_channel();
 }
 
+/* =========================================================
+ * 【藍牙連線狀態回呼 (Callbacks)】
+ * 處理裝置被連上 (connected) 或斷開 (disconnected) 的事件
+ * ========================================================= */
 static void connected(struct bt_conn *conn, uint8_t err) {
     if (err) return;
-    current_conn = bt_conn_ref(conn); 
+    current_conn = bt_conn_ref(conn); // 增加連線物件的參考計數
     printk(">>> 已連線至頻道 %d\n", current_channel + 1);
 }
 
 static void disconnected(struct bt_conn *conn, uint8_t reason) {
     if (current_conn == conn) {
-        bt_conn_unref(current_conn); 
+        bt_conn_unref(current_conn); // 釋放參考計數
         current_conn = NULL;
     }
     printk(">>> 已斷線 (原因: 0x%02x)\n", reason);
+
+    // 如果是因為切換頻道而主動斷線，則觸發下一步切換動作
     if (is_switching) {
         is_switching = false;
         k_work_submit(&complete_switch_work); 
     } else {
+        // 如果是非預期的斷線 (如超出範圍或手機關閉藍牙)，則重新開啟廣播
         k_work_submit(&restart_adv_work);
     }
 }
 
+// 註冊連線回呼
 BT_CONN_CB_DEFINE(conn_callbacks) = { 
     .connected = connected, 
     .disconnected = disconnected,
 };
 
+/* =========================================================
+ * 【藍牙配對與綁定回呼】
+ * 處理與主機 (手機/電腦) 配對成功或失敗的事件
+ * ========================================================= */
 static void auth_pairing_complete(struct bt_conn *conn, bool bonded) {
     printk(">>> 頻道 %d 配對成功並綁定！\n", current_channel + 1);
 }
+
 static void auth_pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
     printk(">>> 頻道 %d 配對失敗 (原因: %d)\n", current_channel + 1, reason);
 }
 static struct bt_conn_auth_info_cb conn_auth_info_callbacks = { .pairing_complete = auth_pairing_complete, .pairing_failed = auth_pairing_failed };
 
+
+/* =========================================================
+ * 【工作排程：切換頻道與物理抹除邏輯】
+ * ========================================================= */
+// 1. 第一步：準備切換。停止廣播，若有連線則主動踢除，斷線後由斷線回呼觸發下一步。
 static void switch_channel_work_handler(struct k_work *work) {
     printk("\n================ 切換頻道 ================\n");
     bt_le_adv_stop(); 
     if (current_conn) {
-        is_switching = true; 
+        is_switching = true; // 立下旗標，告知斷線回呼是我們主動切的
         bt_conn_disconnect(current_conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
     } else {
-        k_work_submit(&complete_switch_work); 
+        k_work_submit(&complete_switch_work); // 沒連線就直接執行下一步
     }
 }
 
+// 2. 第二步：更改頻道變數，存入 Flash (Settings)，並啟動新頻道的廣播。
 static void complete_switch_work_handler(struct k_work *work) {
     current_channel = (current_channel + 1) % CH_COUNT;
     settings_save_one("app/ch", &current_channel, sizeof(current_channel));
     start_adv_for_current_channel();
 }
 
+// 物理層核彈抹除 (清除所有綁定資料與自訂變數)
 static void factory_reset_work_handler(struct k_work *work) {
     printk("\n================ 執行物理層核彈抹除 ================\n");
     bt_le_adv_stop();
-    if (current_conn) bt_conn_disconnect(current_conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+    if (current_conn) {
+        bt_conn_disconnect(current_conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+    }
+    
     printk(">>> 正在啟動物理 Flash 抹除 (繞過檔案系統)...\n");
+    // 取得 Flash 設備指標與儲存分區資訊
     const struct device *flash_dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_flash_controller));
     if (device_is_ready(flash_dev)) {
         off_t storage_offset = DT_REG_ADDR(DT_NODELABEL(storage_partition));
         size_t storage_size = DT_REG_SIZE(DT_NODELABEL(storage_partition));
+        // 強制抹除該分區，讓下次開機時 NVS 會重新初始化為空白
         int rc = flash_erase(flash_dev, storage_offset, storage_size);
-        if (rc == 0) printk(">>> [成功] 實體磁區已全部填入 0xFF！\n");
+        if (rc == 0) {
+            printk(">>> [成功] 實體磁區已全部填入 0xFF！\n");
+        }
     }
+    
     printk(">>> 系統將於 1 秒後重新啟動...\n");
     k_sleep(K_MSEC(1000));
-    sys_reboot(SYS_REBOOT_COLD); 
+    sys_reboot(SYS_REBOOT_COLD); // 觸發系統冷重啟
 }
 
+/* =========================================================
+ * 【硬體按鍵中斷回呼 (ISR)】
+ * 說明：按鍵被按下時觸發。為防止按鍵機械彈跳，加入了防彈跳檢查。
+ * 滿足條件後，提交至 k_work，不在中斷內執行耗時任務。
+ * ========================================================= */
+// 切換頻道按鈕
 void switch_button_pressed(const struct device *dev, struct gpio_callback *cb, uint32_t pins) {
     int64_t now = k_uptime_get();
-    if (now - last_button_time > 1000) { 
+    if (now - last_button_time > 1000) { // 1000 毫秒防彈跳
         last_button_time = now; 
         k_work_submit(&switch_channel_work); 
     }
 }
 
+// 清除按鈕
 void clear_button_pressed(const struct device *dev, struct gpio_callback *cb, uint32_t pins) {
     int64_t now = k_uptime_get();
-    if (now - last_clr_button_time > 1500) { 
+    if (now - last_clr_button_time > 1500) { // 1500 毫秒防彈跳
         last_clr_button_time = now; 
         k_work_submit(&factory_reset_work); 
     }
 }
 
-void editmode_button_pressed(const struct device *dev, struct gpio_callback *cb, uint32_t pins) {
-    int64_t now = k_uptime_get();
-    if (now - last_editmode_button_time > 1000) { 
-        last_editmode_button_time = now; 
-        /* 觸發事件：發送訊號通知 main() 進入編輯模式 */
-        k_event_post(&edit_mode_event, 0x01);
-    }
-}
-
+/* =========================================================
+ * 【系統自癒機制：固定初始化 MAC 身分】
+ * 說明：為三個頻道生成獨立且固定的藍牙 MAC 位址。
+ * 若偵測到 Flash 資料毀損或初次開機，會強制清空並重新生成。
+ * ========================================================= */
 static void init_bluetooth_identities(void) {
     bt_addr_le_t addrs[CONFIG_BT_ID_MAX];
     size_t count = CONFIG_BT_ID_MAX;
-    bt_id_get(addrs, &count); 
+    bt_id_get(addrs, &count); // 取得目前系統已建立的 Identity 數量
     
+    // 如果數量不符，或是 channel_ids 變數異常 (0xFF)
     if (count != 3 || channel_ids[1] == 0xFF || channel_ids[2] == 0xFF) {
         printk("\n>>> [系統自癒] 偵測到 NVS 身分異常 (目前 %d 個)。\n", count);
-        for (int i = 1; i < CONFIG_BT_ID_MAX; i++) bt_id_delete(i);
+        
+        // 刪除除了基礎(出廠)位址以外的所有身分
+        for (int i = 1; i < CONFIG_BT_ID_MAX; i++) {
+            bt_id_delete(i);
+        }
+
         bt_addr_le_t base_addr = addrs[0]; 
 
+        // 建立頻道 2 的專屬 MAC (Base MAC + 1)
         bt_addr_le_t mac1 = base_addr;
         mac1.a.val[0] += 1;
         mac1.type = BT_ADDR_LE_RANDOM;
-        mac1.a.val[5] |= 0xC0; 
+        mac1.a.val[5] |= 0xC0; // 滿足 BLE 規範：Static Random 高位元必須是 11
         int id1 = bt_id_create(&mac1, NULL);
         channel_ids[1] = (id1 >= 0) ? id1 : 1;
 
+        // 建立頻道 3 的專屬 MAC (Base MAC + 2)
         bt_addr_le_t mac2 = base_addr;
         mac2.a.val[0] += 2;
         mac2.type = BT_ADDR_LE_RANDOM;
@@ -256,6 +317,7 @@ static void init_bluetooth_identities(void) {
         int id2 = bt_id_create(&mac2, NULL);
         channel_ids[2] = (id2 >= 0) ? id2 : 2;
 
+        // 將修正後的 ID 陣列存入 Flash
         settings_save_one("app/ids", channel_ids, sizeof(channel_ids));
         printk("-> 身分重建完成！CH1 ID: %d, CH2 ID: %d, CH3 ID: %d\n", channel_ids[0], channel_ids[1], channel_ids[2]);
     } else {
@@ -268,86 +330,108 @@ static void init_bluetooth_identities(void) {
 
 /* =========================================================
  * 【USB CDC-NCM 虛擬網卡設定】
+ * 說明：定義 USB 設備的各項描述符 (語言、製造商、產品名等)，
+ * 並與 Zephyr 的 USB Device (UDC) 綁定。
  * ========================================================= */
 USBD_DESC_CONFIG_DEFINE(fs_cfg_desc, "FS Configuration");
-USBD_CONFIGURATION_DEFINE(sample_fs_config, USB_SCD_SELF_POWERED, 250, &fs_cfg_desc); 
-USBD_DESC_LANG_DEFINE(sample_lang); 
-USBD_DESC_MANUFACTURER_DEFINE(sample_mfr, "XIAO"); 
-USBD_DESC_PRODUCT_DEFINE(sample_product, "XIAO CDC-NCM ZFlip"); 
-USBD_DESC_SERIAL_NUMBER_DEFINE(sample_sn); 
+USBD_CONFIGURATION_DEFINE(sample_fs_config, USB_SCD_SELF_POWERED, 250, &fs_cfg_desc); // 設備配置
+USBD_DESC_LANG_DEFINE(sample_lang); // 語言描述
+USBD_DESC_MANUFACTURER_DEFINE(sample_mfr, "XIAO"); // 製造商名稱
+USBD_DESC_PRODUCT_DEFINE(sample_product, "XIAO CDC-NCM ZFlip"); // 產品名稱
+USBD_DESC_SERIAL_NUMBER_DEFINE(sample_sn); // 序號 (硬體自動分配)
+// 定義 USB 裝置，設定 VID (0x2fe3) 與 PID (0x0090)
 USBD_DEVICE_DEFINE(sample_usbd, DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)), 0x2fe3, 0x0090);
 
+// USB 系統訊息的 Callback 空實作
 static void usbd_msg_cb(struct usbd_context *const ctx, const struct usbd_msg *const msg) {}
 
+
+/* =========================================================
+ * 【錯誤診斷工具：硬體閃燈代碼】
+ * 說明：系統在初始化失敗時，會呼叫此函式並鎖死 (Halt)。
+ * 透過 RGB LED 閃爍次數來呈現百位、十位、個位數的 Error Code。
+ * ========================================================= */
 void debug_halt(int step, int err_code) {
-    if (err_code < 0) err_code = -err_code; 
+    if (err_code < 0) err_code = -err_code; // 轉為正數
     int hundreds = err_code / 100;
     int tens = (err_code % 100) / 10;
     int units = err_code % 10;
 
+    // 先全部關燈
     gpio_pin_set_dt(&led_r, 0); gpio_pin_set_dt(&led_g, 0); gpio_pin_set_dt(&led_b, 0);
 
+    // 進入無窮死迴圈，閃燈報錯
     while (1) {
+        // 閃爍紅燈代表發生錯誤的步驟 (Step)
         for (int i = 0; i < step; i++) {
             gpio_pin_set_dt(&led_r, 1); k_sleep(K_MSEC(300)); gpio_pin_set_dt(&led_r, 0); k_sleep(K_MSEC(300));
         }
         k_sleep(K_MSEC(2000)); 
 
+        // 閃燈顯示 Error Code 的百位數
         for (int i = 0; i < hundreds; i++) {
             gpio_pin_set_dt(&led_r, 1); k_sleep(K_MSEC(400)); gpio_pin_set_dt(&led_r, 0); k_sleep(K_MSEC(400));
         }
         k_sleep(K_MSEC(1000));
         
+        // 閃燈顯示 Error Code 的十位數
         if (tens > 0) {
             for (int i = 0; i < tens; i++) {
                 gpio_pin_set_dt(&led_g, 1); k_sleep(K_MSEC(400)); gpio_pin_set_dt(&led_g, 0); k_sleep(K_MSEC(400));
             }
-        } else if (hundreds > 0) { 
+        } else if (hundreds > 0) { // 有百位沒十位，閃短燈代表 0
             gpio_pin_set_dt(&led_g, 1); k_sleep(K_MSEC(100)); gpio_pin_set_dt(&led_g, 0); k_sleep(K_MSEC(400)); 
         }
         k_sleep(K_MSEC(1000));
 
+        // 閃燈顯示 Error Code 的個位數
         if (units > 0) {
             for (int i = 0; i < units; i++) {
                 gpio_pin_set_dt(&led_b, 1); k_sleep(K_MSEC(400)); gpio_pin_set_dt(&led_b, 0); k_sleep(K_MSEC(400));
             }
-        } else { 
+        } else { // 閃短燈代表 0
             gpio_pin_set_dt(&led_b, 1); k_sleep(K_MSEC(100)); gpio_pin_set_dt(&led_b, 0); k_sleep(K_MSEC(400)); 
         }
-        k_sleep(K_MSEC(4000)); 
+        k_sleep(K_MSEC(4000)); // 週期結束，休息 4 秒後重閃
     }
 }
 
 /* =========================================================
  * 【Web Server 資料區塊】
+ * 說明：準備 HTTP Server 所需要的標頭與 HTML 本體
  * ========================================================= */
+/* 🛡️ 網頁的 HTTP 標頭 (Header)，告知瀏覽器內容為 HTML 並要求關閉連線 */
 const char *html_header = 
 "HTTP/1.1 200 OK\r\n"
 "Content-Type: text/html\r\n"
 "Connection: close\r\n"
 "\r\n";
 
+/* 🛡️ 網頁的本體 (Body)，由 CMake 在編譯時自動從 index.html 轉換成 Hex 陣列並引入 */
 const unsigned char html_body[] = {
     #include "index.html.inc"
 };
 
+// API 呼叫成功時的回應
 const char *ok_response = "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nConnection: close\r\n\r\nOK";
+// 強制導向 (Redirect) 首頁的回應 (用於 Captive Portal 模式)
 const char *redirect_response = "HTTP/1.1 302 Found\r\nLocation: http://192.168.4.1/\r\nConnection: close\r\n\r\n";
 
 /* ========================================================
- * 【微型 DHCP 伺服器 (極簡穩定版)】
+ * 【微型 DHCP 伺服器執行緒】
+ * 說明：負責在 USB 網路連線時，自動發配 IP 給電腦/手機。
+ * 監聽 UDP 67 Port，解析 DISCOVER/REQUEST 封包並回覆 OFFER/ACK。
  * ======================================================== */
 static void mini_dhcp_thread(void *p1, void *p2, void *p3) {
-    int sock = zsock_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); 
+    int sock = zsock_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP); // 建立 UDP 封包
     if (sock < 0) return;
-    
     int bcast_en = 1;
-    zsock_setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &bcast_en, sizeof(bcast_en)); 
+    zsock_setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &bcast_en, sizeof(bcast_en)); // 允許廣播
     
     struct sockaddr_in bind_addr;
     memset(&bind_addr, 0, sizeof(bind_addr));
     bind_addr.sin_family = AF_INET;
-    bind_addr.sin_port = htons(67); 
+    bind_addr.sin_port = htons(67); // DHCP Server 監聽 Port
     bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     if (zsock_bind(sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr)) < 0) return;
     
@@ -355,55 +439,62 @@ static void mini_dhcp_thread(void *p1, void *p2, void *p3) {
     while (1) {
         struct sockaddr_in client_addr;
         socklen_t client_len = sizeof(client_addr);
-        
+        // 阻塞等待接收 DHCP 請求
         ssize_t len = zsock_recvfrom(sock, buf, sizeof(buf), 0, (struct sockaddr *)&client_addr, &client_len);
         
-        if (len < 0) {
-            k_sleep(K_MSEC(500));
-            continue; 
-        }
-
-        /* 🛡️ 旗標保護：純藍牙模式收到封包直接丟棄 */
-        if (!is_edit_mode) continue;
-
+        // 解析 BootP 結構 (至少需 240 bytes，且 op=1 表示 Boot Request)
         if (len >= 240 && buf[0] == 1) {
             uint8_t msg_type = 0;
             int i = 240;
+            // 尋找 DHCP Message Type 選項 (Option 53)
             while (i < len && buf[i] != 255) {
                 if (buf[i] == 53 && i + 2 < len && buf[i+1] >= 1) { msg_type = buf[i+2]; break; }
                 if (buf[i] == 0) { i++; } else { if (i + 1 >= len) break; i += 2 + buf[i+1]; }
             }
             
+            // 如果是 DISCOVER(1) 或 REQUEST(3)，我們準備回覆
             if (msg_type == 1 || msg_type == 3) {
                 uint8_t rep[300];
                 memset(rep, 0, sizeof(rep));
+                // 組合 BootP 回覆封包
                 rep[0] = 2; rep[1] = 1; rep[2] = 6; 
-                memcpy(&rep[4], &buf[4], 4); 
+                memcpy(&rep[4], &buf[4], 4); // 複製 Transaction ID
                 
+                // 設定分配給用戶端的 IP (Your IP): 192.168.4.2
                 rep[16] = 192; rep[17] = 168; rep[18] = 4; rep[19] = 2; 
+                // 設定我們伺服器本身的 IP (Server IP): 192.168.4.1
                 rep[20] = 192; rep[21] = 168; rep[22] = 4; rep[23] = 1; 
+                // 複製用戶端的 MAC 位址
                 memcpy(&rep[28], &buf[28], 16); 
+                // 放入 DHCP Magic Cookie
                 rep[236] = 0x63; rep[237] = 0x82; rep[238] = 0x53; rep[239] = 0x63; 
                 
                 int opt = 240;
+                // Option 53: 回覆 OFFER(2) 或 ACK(5)
                 rep[opt++] = 53; rep[opt++] = 1; rep[opt++] = (msg_type == 1) ? 2 : 5; 
+                // Option 54: Server Identifier (192.168.4.1)
                 rep[opt++] = 54; rep[opt++] = 4; rep[opt++] = 192; rep[opt++] = 168; rep[opt++] = 4; rep[opt++] = 1; 
+                // Option 1: Subnet Mask (255.255.255.0)
                 rep[opt++] = 1;  rep[opt++] = 4; rep[opt++] = 255; rep[opt++] = 255; rep[opt++] = 255; rep[opt++] = 0; 
                 
 #if ENABLE_CAPTIVE_PORTAL == 1
+                /* 在強制彈窗模式下，提供 Router(Option 3) 與 DNS(Option 6) 引導所有流量到本機 */
                 rep[opt++] = 3;  rep[opt++] = 4; rep[opt++] = 192; rep[opt++] = 168; rep[opt++] = 4; rep[opt++] = 1; 
                 rep[opt++] = 6;  rep[opt++] = 4; rep[opt++] = 192; rep[opt++] = 168; rep[opt++] = 4; rep[opt++] = 1; 
 #endif
+                // Option 51: IP 租期 (無限長/極長)
                 rep[opt++] = 51; rep[opt++] = 4; rep[opt++] = 0x00; rep[opt++] = 0x01; rep[opt++] = 0x51; rep[opt++] = 0x80; 
                 
+                // Option 15: Domain Name (自訂網路名稱)
                 const char *net_name = "XIAO-Panel";
                 int name_len = strlen(net_name);
                 rep[opt++] = 15; rep[opt++] = name_len;
                 memcpy(&rep[opt], net_name, name_len);
                 opt += name_len;
                 
-                rep[opt++] = 255; 
+                rep[opt++] = 255; // End Option
 
+                // 廣播回覆給網路上的設備 (Port 68)
                 struct sockaddr_in bcast_addr;
                 memset(&bcast_addr, 0, sizeof(bcast_addr));
                 bcast_addr.sin_family = AF_INET;
@@ -415,10 +506,14 @@ static void mini_dhcp_thread(void *p1, void *p2, void *p3) {
         }
     }
 }
+// 註冊並啟動 DHCP 背景執行緒 (堆疊 2048 Bytes, 優先級 5)
 K_THREAD_DEFINE(dhcp_thread_id, 2048, mini_dhcp_thread, NULL, NULL, NULL, 5, 0, 0);
 
 /* ========================================================
- * 【🕸️ DNS 攔截器執行緒 (極簡穩定版)】
+ * 【🕸️ DNS 攔截器執行緒 (Captive Portal 核心) 完整保留】
+ * 說明：監聽 UDP Port 53，對於任何 DNS 查詢，
+ * 都「欺騙」客戶端，回報該網址的 IP 為 192.168.4.1 (我們自己)。
+ * 這會導致用戶開啟任何網頁都會被導向我們的控制面板。
  * ======================================================== */
 #if ENABLE_CAPTIVE_PORTAL == 1
 static void captive_portal_dns_thread(void *p1, void *p2, void *p3) {
@@ -428,41 +523,44 @@ static void captive_portal_dns_thread(void *p1, void *p2, void *p3) {
     struct sockaddr_in bind_addr;
     memset(&bind_addr, 0, sizeof(bind_addr));
     bind_addr.sin_family = AF_INET;
-    bind_addr.sin_port = htons(53); 
+    bind_addr.sin_port = htons(53); // DNS 監聽 Port
     bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    
     if (zsock_bind(sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr)) < 0) return;
 
     uint8_t buf[512];
     while (1) {
         struct sockaddr_in client_addr;
         socklen_t client_len = sizeof(client_addr);
-        
+        // 阻塞等待 DNS 查詢
         ssize_t len = zsock_recvfrom(sock, buf, sizeof(buf), 0, (struct sockaddr *)&client_addr, &client_len);
         
-        if (len < 0) {
-            k_sleep(K_MSEC(500));
-            continue;
-        }
-
-        /* 🛡️ 旗標保護：純藍牙模式收到封包直接丟棄 */
-        if (!is_edit_mode) continue;
-
         if (len >= 12) {
+            /* 檢查是否為標準的 DNS 查詢 (QR=0 表示 Query, OPCODE=0 表示標準查詢) */
             if ((buf[2] & 0x80) == 0 && (buf[2] & 0x78) == 0) {
                 uint8_t rep[512];
-                memcpy(rep, buf, len); 
+                memcpy(rep, buf, len); /* 先複製原始查詢請求 (保留 Query 問題段) */
                 
+                /* 修改 DNS 標記為「標準回覆 (QR=1)」且沒有錯誤 */
                 rep[2] |= 0x80; 
+                /* 設定 Answer Count = 1 (提供一個回答) */
                 rep[6] = 0x00; rep[7] = 0x01; 
 
                 int opt = len;
+                /* Name Pointer (利用指標指向封包偏移量 12 的原始查詢名稱，節省空間) */
                 rep[opt++] = 0xC0; rep[opt++] = 0x0C;
+                /* Type A (要求回覆 IPv4 位址) */
                 rep[opt++] = 0x00; rep[opt++] = 0x01;
+                /* Class IN (網際網路) */
                 rep[opt++] = 0x00; rep[opt++] = 0x01;
+                /* TTL (存活時間，設為 60 秒) */
                 rep[opt++] = 0x00; rep[opt++] = 0x00; rep[opt++] = 0x00; rep[opt++] = 0x3C;
+                /* 資料長度 (4 bytes，也就是底下的 IP 長度) */
                 rep[opt++] = 0x00; rep[opt++] = 0x04;
+                /* 強制綁架，回答我們的 IP: 192.168.4.1 */
                 rep[opt++] = 192; rep[opt++] = 168; rep[opt++] = 4; rep[opt++] = 1;
 
+                // 發送偽造的 DNS 回覆
                 zsock_sendto(sock, rep, opt, 0, (struct sockaddr *)&client_addr, client_len);
             }
         }
@@ -471,16 +569,20 @@ static void captive_portal_dns_thread(void *p1, void *p2, void *p3) {
 K_THREAD_DEFINE(dns_thread_id, 2048, captive_portal_dns_thread, NULL, NULL, NULL, 5, 0, 0);
 #endif
 
-/* =========================================================
- * 【模組化初始化函式群】
- * ========================================================= */
-static void init_leds(void) {
-    if (gpio_is_ready_dt(&led_r)) gpio_pin_configure_dt(&led_r, GPIO_OUTPUT_INACTIVE);
-    if (gpio_is_ready_dt(&led_g)) gpio_pin_configure_dt(&led_g, GPIO_OUTPUT_INACTIVE);
-    if (gpio_is_ready_dt(&led_b)) gpio_pin_configure_dt(&led_b, GPIO_OUTPUT_INACTIVE);
-}
+int main(void) {
+    /* =========================================================
+     * 1. 系統啟動與基本設定 
+     * 給 USB 緩衝時間，並印出開機字眼
+     * ========================================================= */
+    k_sleep(K_SECONDS(3));
+    printk("\n========================================\n");
+    printk("XIAO nRF52840 Plus - 完美顯形商用版\n");
+    printk("========================================\n");
 
-static void init_buttons(void) {
+    /* =========================================================
+     * 2. 初始化按鍵與 GPIO 中斷
+     * 設定按鍵為輸入並綁定上升沿觸發 (Edge to Active)
+     * ========================================================= */
     if (device_is_ready(button.port)) {
         gpio_pin_configure_dt(&button, GPIO_INPUT);
         gpio_pin_interrupt_configure_dt(&button, GPIO_INT_EDGE_TO_ACTIVE);
@@ -493,16 +595,30 @@ static void init_buttons(void) {
         gpio_init_callback(&clr_button_cb_data, clear_button_pressed, BIT(clr_button.pin));
         gpio_add_callback(clr_button.port, &clr_button_cb_data);
     }
-    if (device_is_ready(editmode_button.port)) {
-        gpio_pin_configure_dt(&editmode_button, GPIO_INPUT);
-        gpio_pin_interrupt_configure_dt(&editmode_button, GPIO_INT_EDGE_TO_ACTIVE);
-        gpio_init_callback(&editmode_button_cb_data, editmode_button_pressed, BIT(editmode_button.pin));
-        gpio_add_callback(editmode_button.port, &editmode_button_cb_data);
-    }
-}
 
-// 註冊 USB CDC-NCM 描述符
-static void init_usb_cdc_ncm(void) {
+    /* =========================================================
+     * 3. 初始化藍牙服務
+     * 啟動藍牙，載入 Flash 設定，建立身分，最後開始廣播
+     * ========================================================= */
+    bt_conn_auth_info_cb_register(&conn_auth_info_callbacks); // 註冊配對回呼
+    bt_enable(NULL); // 啟動藍牙協定棧
+    
+    settings_load(); // 載入 NVS 內的設定 (頻道、IDs)
+    init_bluetooth_identities(); // 檢查或建立固定 MAC 身分
+    
+    start_adv_for_current_channel(); // 啟動第一波藍牙廣播
+
+    /* =========================================================
+     * 4. 初始化 LED (RGB 指示燈)
+     * ========================================================= */
+    if (gpio_is_ready_dt(&led_r)) gpio_pin_configure_dt(&led_r, GPIO_OUTPUT_INACTIVE);
+    if (gpio_is_ready_dt(&led_g)) gpio_pin_configure_dt(&led_g, GPIO_OUTPUT_INACTIVE);
+    if (gpio_is_ready_dt(&led_b)) gpio_pin_configure_dt(&led_b, GPIO_OUTPUT_INACTIVE);
+
+    /* =========================================================
+     * 5. 初始化 USB 與虛擬網卡 CDC NCM 
+     * 逐一註冊 USB 描述符，並啟動 USB 設備
+     * ========================================================= */
     int err = usbd_add_descriptor(&sample_usbd, &sample_lang); if (err) debug_halt(1, err);
     err = usbd_add_descriptor(&sample_usbd, &sample_mfr); if (err) debug_halt(1, err);
     err = usbd_add_descriptor(&sample_usbd, &sample_product); if (err) debug_halt(1, err);
@@ -513,13 +629,16 @@ static void init_usb_cdc_ncm(void) {
     err = usbd_msg_register_cb(&sample_usbd, usbd_msg_cb); if (err) debug_halt(5, err);
     
     err = usbd_init(&sample_usbd); if (err) debug_halt(6, err); 
-}
+    err = usbd_enable(&sample_usbd); if (err) debug_halt(7, err); 
 
-// 初始化網路介面 (動態植入 MAC 與設定 IP)
-static struct net_if *init_network_interface(void) {
+    gpio_pin_set_dt(&led_b, 1); // 亮藍燈，表示 USB 準備就緒，等待網卡取得
     struct net_if *iface = net_if_get_default();
     if (!iface) debug_halt(8, 1);
 
+    /* =========================================================
+     * 6. 動態植入網路介面的出廠 MAC 位址
+     * 從晶片內部 NRF_FICR 暫存器讀取硬體全球唯一碼作為網卡 MAC
+     * ========================================================= */
     uint32_t ficr_deviceaddr0 = nrf_ficr_deviceaddr_get(NRF_FICR, 0);
     uint32_t ficr_deviceaddr1 = nrf_ficr_deviceaddr_get(NRF_FICR, 1);
     
@@ -531,212 +650,150 @@ static struct net_if *init_network_interface(void) {
     mac_addr[4] = (ficr_deviceaddr0 >> 8) & 0xFF;
     mac_addr[5] = (ficr_deviceaddr0 >> 0) & 0xFF;
 
+    /* 藍牙/網路 MAC 規範：Static Random 位址的最高兩個 bit 必須為 11 (即 0xC0) */
     mac_addr[0] |= 0xC0; 
     
     struct ethernet_req_params eth_params;
     memcpy(eth_params.mac_address.addr, mac_addr, 6);
     
+    /* 設定網卡前必須先將介面設為 Down，改完 MAC 後再設為 Up */
     net_if_down(iface);
     int mac_err = net_mgmt(NET_REQUEST_ETHERNET_SET_MAC_ADDRESS, iface, &eth_params, sizeof(eth_params));
     if (mac_err < 0) debug_halt(10, mac_err); 
+    net_if_up(iface);
 
+    /* =========================================================
+     * 7. 等待網路啟動與設定固定 IP
+     * ========================================================= */
+    /* 阻塞直到網卡狀態變為 UP */
+    while (!net_if_is_up(iface)) { k_sleep(K_MSEC(100)); }
+    gpio_pin_set_dt(&led_b, 0); // 關閉藍燈，代表已啟動
+
+    /* 設定本機固定 IP 為：192.168.4.1，子網路遮罩 255.255.255.0 */
     struct in_addr my_addr, my_netmask;
     net_addr_pton(AF_INET, "192.168.4.1", &my_addr);
     if (!net_if_ipv4_addr_add(iface, &my_addr, NET_ADDR_MANUAL, 0)) debug_halt(9, 1);
     net_addr_pton(AF_INET, "255.255.255.0", &my_netmask);
     net_if_ipv4_set_netmask_by_addr(iface, &my_addr, &my_netmask);
 
-    return iface;
-}
+    k_sleep(K_MSEC(500));
+    gpio_pin_set_dt(&led_g, 1); // 亮綠燈代表系統初始化全部完畢，準備接客
 
-// 初始化 TCP 伺服器 Socket
-static int init_tcp_server(void) {
+    /* =========================================================
+     * 8. 啟動 TCP Socket 伺服器
+     * ========================================================= */
     int serv_sock = zsock_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (serv_sock < 0) return -1;
     
-    int reuse = 1;
-    zsock_setsockopt(serv_sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
-
     struct sockaddr_in bind_addr;
     memset(&bind_addr, 0, sizeof(bind_addr));
     bind_addr.sin_family = AF_INET;
-    bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    bind_addr.sin_port = htons(80);
+    bind_addr.sin_addr.s_addr = htonl(INADDR_ANY); // 綁定所有網卡介面
+    bind_addr.sin_port = htons(80);                // 監聽 HTTP 標準 Port 80
     zsock_bind(serv_sock, (struct sockaddr *)&bind_addr, sizeof(bind_addr));
     
-    zsock_listen(serv_sock, 10);
-
-    /* 🛡️ 加上 1 秒的 Timeout，確保 Accept 不會卡死 */
-    struct timeval tv = { .tv_sec = 1, .tv_usec = 0 };
-    zsock_setsockopt(serv_sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-
-    return serv_sock;
-}
-
-/* =========================================================
- * 【主程式 Main 進入點】
- * ========================================================= */
-int main(void) {
-    k_sleep(K_SECONDS(3));
-    printk("\n========================================\n");
-    printk("XIAO nRF52840 Plus - 完美顯形商用版\n");
-    printk("========================================\n");
-
-    // 1. 初始化各項硬體與周邊
-    init_leds();
-    init_buttons();
-
-    // 2. 初始化藍牙與身分載入
-    bt_conn_auth_info_cb_register(&conn_auth_info_callbacks);
-    bt_enable(NULL);
-    settings_load(); 
-    init_bluetooth_identities();
-    start_adv_for_current_channel();
-
-    // 3. 準備網路底層與 USB (系統開機時只 Init 不 Enable，保持安靜)
-    init_usb_cdc_ncm();
-    struct net_if *iface = init_network_interface();
-    if (!iface) debug_halt(8, 1);
-    
-    int serv_sock = init_tcp_server();
-    if (serv_sock < 0) return -1;
+    zsock_listen(serv_sock, 10); // 允許最多 10 個客戶端排隊
 
     /* =========================================================
-     * 🟢 系統主迴圈 (控制 "純藍牙模式" 與 "編輯模式" 切換)
+     * 9. 進入 HTTP Server 無窮迴圈監聽
+     * 說明：在此處攔截瀏覽器的要求，並回傳 HTML 網頁或操作 LED
      * ========================================================= */
     while (1) {
-        /* ----- 進入【純藍牙工作模式】 ----- */
-        is_edit_mode = false; 
-
-        gpio_pin_set_dt(&led_b, 0);
-        gpio_pin_set_dt(&led_g, 0);
-
-        printk("\n>>> 系統目前處於 [純藍牙工作模式]\n");
-        printk(">>> 若需修改設定，請按下實體 D7 鍵以觸發 [編輯模式]...\n\n");
-
-        /* 無限期休眠等待 D7 鍵觸發 */
-        k_event_wait(&edit_mode_event, 0x01, false, K_FOREVER);
-        k_event_set(&edit_mode_event, 0x00); // 收到信號，清除旗標
-
-        /* ----- 進入【編輯模式】 ----- */
-        printk("========================================\n");
-        printk(">>> 🚀 [編輯模式] 已觸發！正在啟動 USB 網卡與網路伺服器...\n");
-        printk("========================================\n");
-
-        /* 啟動網卡與設定旗標 */
-        usbd_enable(&sample_usbd);
-        net_if_up(iface);
-
-        gpio_pin_set_dt(&led_b, 1);
-        while (!net_if_is_up(iface)) { k_sleep(K_MSEC(100)); } 
-        gpio_pin_set_dt(&led_b, 0);
-
-        is_edit_mode = true; 
-        gpio_pin_set_dt(&led_g, 1); // 亮綠燈代表就緒
-
-        printk(">>> 網頁伺服器已就緒！請連接電腦並瀏覽 http://192.168.4.1\n");
-
-        bool exit_requested = false;
+        struct sockaddr_in client_addr;
+        socklen_t client_addr_len = sizeof(client_addr);
+        // 阻塞直到有瀏覽器連線進來
+        int client_sock = zsock_accept(serv_sock, (struct sockaddr *)&client_addr, &client_addr_len);
         
-        /* 進入 HTTP Server 迴圈監聽 */
-        while (!exit_requested) {
-            struct sockaddr_in client_addr;
-            socklen_t client_addr_len = sizeof(client_addr);
-            
-            // Timeout 設為 1 秒，每秒會醒來檢查一次
-            int client_sock = zsock_accept(serv_sock, (struct sockaddr *)&client_addr, &client_addr_len);
-            
-            /* 🛡️ 檢查是否又按了 D7 實體鍵強制離開 */
-            if (k_event_test(&edit_mode_event, 0x01)) {
-                k_event_set(&edit_mode_event, 0x00); 
-                exit_requested = true;
-                if (client_sock >= 0) zsock_close(client_sock);
-                continue; 
-            }
-            
-            if (client_sock < 0) {
-                continue; 
-            }
-            
-            gpio_pin_set_dt(&led_b, 1);
-            
-            /* 🛡️ 無情掛電話機制：0.5秒內不給資料就直接切斷 */
-            char rx_buf[1024] = {0};
-            int total_len = 0;
-            int wait_ms = 500; 
-            
-            while (total_len < sizeof(rx_buf) - 1 && wait_ms > 0) {
-                ssize_t received = zsock_recv(client_sock, rx_buf + total_len, sizeof(rx_buf) - 1 - total_len, ZSOCK_MSG_DONTWAIT);
-                
-                if (received > 0) {
-                    total_len += received;
-                    if (strstr(rx_buf, "\r\n\r\n") != NULL) break; 
-                    wait_ms = 500; 
-                } else if (received == 0) {
-                    break; 
-                } else {
-                    k_sleep(K_MSEC(50));
-                    wait_ms -= 50;
-                }
-            }
-            
-            if (total_len > 0) {
-                /* 🌟 核心路由：攔截來自網頁的 /exit 請求 */
-                if (strstr(rx_buf, "GET /exit") != NULL) {
-                    zsock_send(client_sock, ok_response, strlen(ok_response), 0);
-                    exit_requested = true; 
-                }
-                else if (strstr(rx_buf, "GET /led/on") != NULL) {
-                    gpio_pin_set_dt(&led_g, 1);
-                    zsock_send(client_sock, ok_response, strlen(ok_response), 0);
-                } 
-                else if (strstr(rx_buf, "GET /led/off") != NULL) {
-                    gpio_pin_set_dt(&led_g, 0);
-                    zsock_send(client_sock, ok_response, strlen(ok_response), 0);
-                } 
-                else if (strstr(rx_buf, "GET /favicon.ico") != NULL) {
-                    const char *not_found = "HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n";
-                    zsock_send(client_sock, not_found, strlen(not_found), 0);
-                }
-                else if (strstr(rx_buf, "GET / ") != NULL || strstr(rx_buf, "GET /index.html") != NULL) {
-                    /* 1. 先發送 HTTP 標頭 */
-                    zsock_send(client_sock, html_header, strlen(html_header), 0);
-                    
-                    /* 2. 🛡️ 升級：大檔案分塊發送機制 (TCP Chunking) */
-                    int total_sent = 0;
-                    int html_size = sizeof(html_body);
-                    
-                    while (total_sent < html_size) {
-                        ssize_t sent = zsock_send(client_sock, html_body + total_sent, html_size - total_sent, 0);
-                        if (sent <= 0) break;
-                        total_sent += sent;
-                    }
-                }
-                else {
-#if ENABLE_CAPTIVE_PORTAL == 1
-                    zsock_send(client_sock, redirect_response, strlen(redirect_response), 0);
-#else
-                    const char *not_found = "HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n";
-                    zsock_send(client_sock, not_found, strlen(not_found), 0);
-#endif
-                }
-            }
-            
-            zsock_shutdown(client_sock, ZSOCK_SHUT_WR);
-            char drain_buf[128];
-            while (zsock_recv(client_sock, drain_buf, sizeof(drain_buf), ZSOCK_MSG_DONTWAIT) > 0) {}
-            
-            k_sleep(K_MSEC(50)); 
-            zsock_close(client_sock);
-            gpio_pin_set_dt(&led_b, 0);
+        if (client_sock < 0) {
+            k_sleep(K_MSEC(10));
+            continue;
         }
         
-        // 離開編輯模式的清理
-        /* 🛑 軟重啟退出機制：乾淨俐落避開所有作業系統 Bug */
-        printk("\n>>> 收到 EXIT 請求，系統即將重新啟動以安全退出編輯模式...\n");
-        k_sleep(K_MSEC(500)); // 給 TCP 回覆一點時間傳送出去
-        sys_reboot(SYS_REBOOT_WARM);
+        gpio_pin_set_dt(&led_b, 1); // 處理請求期間亮藍燈提示
+        
+        /* 🛡️ 無情掛電話機制：避免瀏覽器建立連線後不傳資料導致系統卡死
+           0.5秒內不給完整 HTTP 請求 (找到 \r\n\r\n) 就直接切斷 */
+        char rx_buf[1024] = {0};
+        int total_len = 0;
+        int wait_ms = 500; 
+        
+        while (total_len < sizeof(rx_buf) - 1 && wait_ms > 0) {
+            ssize_t received = zsock_recv(client_sock, rx_buf + total_len, sizeof(rx_buf) - 1 - total_len, ZSOCK_MSG_DONTWAIT);
+            
+            if (received > 0) {
+                total_len += received;
+                if (strstr(rx_buf, "\r\n\r\n") != NULL) break; // 找到 HTTP Header 結束符號
+                wait_ms = 500; /* 對方有傳資料，重置計時器 */
+            } else if (received == 0) {
+                break; /* 對方主動關閉連線 */
+            } else {
+                /* 還沒收到，小睡 50ms 再看一次 */
+                k_sleep(K_MSEC(50));
+                wait_ms -= 50;
+            }
+        }
+        
+        if (total_len > 0) {
+            // 路由解析：如果網址是 /led/on
+            if (strstr(rx_buf, "GET /led/on") != NULL) {
+                gpio_pin_set_dt(&led_g, 1);
+                zsock_send(client_sock, ok_response, strlen(ok_response), 0);
+            } 
+            // 路由解析：如果網址是 /led/off
+            else if (strstr(rx_buf, "GET /led/off") != NULL) {
+                gpio_pin_set_dt(&led_g, 0);
+                zsock_send(client_sock, ok_response, strlen(ok_response), 0);
+            } 
+            // 處理瀏覽器請求網站圖示，直接回傳 404，避免浪費資源
+            else if (strstr(rx_buf, "GET /favicon.ico") != NULL) {
+                const char *not_found = "HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n";
+                zsock_send(client_sock, not_found, strlen(not_found), 0);
+            }
+            // 路由解析：請求首頁
+            else if (strstr(rx_buf, "GET / ") != NULL || strstr(rx_buf, "GET /index.html") != NULL) {
+                /* 1. 先發送 HTTP 標頭 */
+                zsock_send(client_sock, html_header, strlen(html_header), 0);
+                
+                /* 2. 🛡️ 升級：大檔案分塊發送機制 (TCP Chunking) 
+                   避免一次呼叫 send 發送超大網頁檔導致記憶體不夠或 Socket Buffer 塞爆 */
+                int total_sent = 0;
+                int html_size = sizeof(html_body);
+                
+                while (total_sent < html_size) {
+                    /* 每次嘗試把剩下的資料送出去，底層會根據 TCP Window 大小自動裁切發送量 */
+                    ssize_t sent = zsock_send(client_sock, html_body + total_sent, html_size - total_sent, 0);
+                    
+                    if (sent <= 0) {
+                        break; /* 如果網路錯誤或對方斷線，就停止發送 */
+                    }
+                    total_sent += sent; /* 累加已經成功發送的位元組數量 */
+                }
+            }
+            // 處理未知網址請求 (例如 Captive Portal 模式下被攔截的網域)
+            else {
+#if ENABLE_CAPTIVE_PORTAL == 1
+                /* 如果有開啟 Captive Portal，就把所有不認識的網址都強制 Redirect 到首頁 */
+                zsock_send(client_sock, redirect_response, strlen(redirect_response), 0);
+#else
+                const char *not_found = "HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n";
+                zsock_send(client_sock, not_found, strlen(not_found), 0);
+#endif
+            }
+        }
+        
+        /* TCP 連線優雅關閉流程：先關閉發送通道 */
+        zsock_shutdown(client_sock, ZSOCK_SHUT_WR);
+        
+        /* 抽乾接收緩衝區 (Drain)，確保客戶端發完剩下的數據不會造成 RST 重置 */
+        char drain_buf[128];
+        while (zsock_recv(client_sock, drain_buf, sizeof(drain_buf), ZSOCK_MSG_DONTWAIT) > 0) {}
+        
+        k_sleep(K_MSEC(50)); 
+        zsock_close(client_sock);  // 真正釋放 Socket 資源
+        gpio_pin_set_dt(&led_b, 0); // 關閉藍燈，代表處理完畢
     }
     
-    return 0;
+    return 0; /* 正常情況下不會執行到這裡 */
 }
+
+
