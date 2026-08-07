@@ -1,18 +1,79 @@
-/* 1. 指定系統 Console 使用 USB CDC */
+#include <zephyr/dt-bindings/led/led.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+/* ==========================================
+ * 1. 系統預設與虛擬節點設定 (Root Node)
+ * ========================================== */
 / {
     chosen {
+        /* 指定系統 Console 使用 USB CDC */
         zephyr,console = &cdc_acm_uart0;
+    };
+
+    /* --- 編碼器 2 (小滾輪：軟體 GPIO QDEC, 使用 D2 & D3) --- */
+    encoder_2: qdec_soft {
+        compatible = "gpio-qdec";
+        /* D2對應 P0.28, D3對應 P0.29 */
+        gpios = <&gpio0 28 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>,
+                <&gpio0 29 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        steps-per-period = <4>;
+		zephyr,axis = <INPUT_REL_WHEEL>;
+		sample-time-us = <2000>;
+		idle-timeout-ms = <250>;
+    };
+
+    /* --- 獨立按鍵 (編碼器下壓 x2, 設定按鍵 x2) --- */
+    buttons: buttons {
+        compatible = "gpio-keys";
+        enc_sw1: enc_sw1 {
+            gpios = <&gpio0 4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>; /* D4 */
+            label = "Encoder 1 Switch";
+        };
+        enc_sw2: enc_sw2 {
+            gpios = <&gpio0 5 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>; /* D5 */
+            label = "Encoder 2 Switch";
+        };
+        set_btn1: set_btn1 {
+            gpios = <&gpio1 11 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>; /* D6 */
+            label = "Setting Button 1";
+        };
+        set_btn2: set_btn2 {
+            gpios = <&gpio1 12 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>; /* D7 */
+            label = "Setting Button 2";
+        };
+    };
+
+    /* --- 3x3 矩陣按鍵 (使用 Zephyr 內建的 kscan 掃描架構) --- */
+    kscan0: kscan0 {
+        compatible = "zephyr,kscan-gpio-matrix";
+        label = "MATRIX_KEYPAD";
+        diode-direction = "col2row"; /* 假設掃描方向為行掃列，視你未來二極體的銲接方向而定 */
+        
+        /* 行 (Row): D11(P0.15), D12(P0.19), D13(P1.01) - 位於背面銲盤 */
+        row-gpios = <&gpio0 15 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+                    <&gpio0 19 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
+                    <&gpio1 1  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+                    
+        /* 列 (Col): D16(P0.31), D17(P1.03), D18(P1.05) - 位於背面銲盤 */
+        col-gpios = <&gpio0 31 GPIO_ACTIVE_HIGH>,
+                    <&gpio1 3  GPIO_ACTIVE_HIGH>,
+                    <&gpio1 5  GPIO_ACTIVE_HIGH>;
     };
 };
 
-/* 2. 宣告 USB CDC 節點 */
+/* ==========================================
+ * 2. 硬體周邊介面設定 (Hardware Interfaces)
+ * ========================================== */
+
+/* 宣告 USB CDC 節點 */
 &zephyr_udc0 {
     cdc_acm_uart0: cdc_acm_uart0 {
         compatible = "zephyr,cdc-acm-uart";
     };
 };
 
+/* 定義硬體腳位功能 (Pinctrl) */
 &pinctrl {
+    /* 編碼器 1 (大旋鈕, D0 & D1) */
     qdec_default: qdec_default {
         group1 {
             psels = <NRF_PSEL(QDEC_A, 0, 2)>,
@@ -20,15 +81,41 @@
             bias-pull-up;
         };
     };
+
+    /* WS2812 LED 的 SPI 資料輸出腳位 (D8 = P1.13) */
+    spi1_default: spi1_default {
+        group1 {
+            psels = <NRF_PSEL(SPIM_MOSI, 1, 13)>;
+        };
+    };
 };
 
+/* --- 硬體 QDEC 設定 (編碼器 1) --- */
 &qdec {
     status = "okay";
     pinctrl-0 = <&qdec_default>;
     pinctrl-names = "default";
     steps = <24>;
     led-pre = <0>; 
-    
-    /* 改回 2048 微秒，讓晶片反應變快，捕捉快速轉動 */
-    nordic,period = "SAMPLEPER_2048US";
+    nordic,period = "SAMPLEPER_1024US";
+};
+
+/* --- WS2812 串列 LED 設定 --- */
+&spi1 {
+    compatible = "nordic,nrf-spim";
+    status = "okay";
+    pinctrl-0 = <&spi1_default>;
+    pinctrl-names = "default";
+
+    led_strip: ws2812@0 {
+        compatible = "worldsemi,ws2812-spi";
+        reg = <0>;
+        spi-max-frequency = <4000000>;
+        chain-length = <6>; /* 對應你的設計圖：總共 6 顆指示燈 */
+        spi-one-frame = <0x70>;
+        spi-zero-frame = <0x40>;
+        color-mapping = <LED_COLOR_ID_GREEN
+                         LED_COLOR_ID_RED
+                         LED_COLOR_ID_BLUE>;
+    };
 };

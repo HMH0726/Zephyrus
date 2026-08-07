@@ -32,4 +32,5 @@ empty_file.o: \
  D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/boards/seeed/xiao_ble/xiao_ble-pinctrl.dtsi \
  D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/boards/seeed/xiao_ble/seeed_xiao_connector.dtsi \
  D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/boards/common/usb/cdc_acm_serial.dtsi \
- D:/Users/ORESANJO/Downloads/Zephyrus/projects/ENC/app.overlay
+ D:/Users/ORESANJO/Downloads/Zephyrus/projects/ENC/app.overlay \
+ D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/include/zephyr/dt-bindings/led/led.h

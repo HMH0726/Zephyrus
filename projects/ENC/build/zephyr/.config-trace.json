@@ -44,6 +44,17 @@
     ]
   ],
   [
+    "CONFIG_DT_HAS_GPIO_KEYS_ENABLED",
+    "n",
+    "bool",
+    "y",
+    "default",
+    [
+      "D:/Users/ORESANJO/Downloads/Zephyrus/projects/ENC/build/Kconfig/Kconfig.dts",
+      3253
+    ]
+  ],
+  [
     "CONFIG_DT_HAS_GPIO_LEDS_ENABLED",
     "n",
     "bool",
@@ -52,6 +63,17 @@
     [
       "D:/Users/ORESANJO/Downloads/Zephyrus/projects/ENC/build/Kconfig/Kconfig.dts",
       3258
+    ]
+  ],
+  [
+    "CONFIG_DT_HAS_GPIO_QDEC_ENABLED",
+    "n",
+    "bool",
+    "y",
+    "default",
+    [
+      "D:/Users/ORESANJO/Downloads/Zephyrus/projects/ENC/build/Kconfig/Kconfig.dts",
+      3263
     ]
   ],
   [
@@ -297,6 +319,17 @@
     ]
   ],
   [
+    "CONFIG_DT_HAS_NORDIC_NRF_SPIM_ENABLED",
+    "n",
+    "bool",
+    "y",
+    "default",
+    [
+      "D:/Users/ORESANJO/Downloads/Zephyrus/projects/ENC/build/Kconfig/Kconfig.dts",
+      6553
+    ]
+  ],
+  [
     "CONFIG_DT_HAS_NORDIC_NRF_SWI_ENABLED",
     "n",
     "bool",
@@ -459,6 +492,17 @@
     [
       "D:/Users/ORESANJO/Downloads/Zephyrus/projects/ENC/build/Kconfig/Kconfig.dts",
       12438
+    ]
+  ],
+  [
+    "CONFIG_DT_HAS_WORLDSEMI_WS2812_SPI_ENABLED",
+    "n",
+    "bool",
+    "y",
+    "default",
+    [
+      "D:/Users/ORESANJO/Downloads/Zephyrus/projects/ENC/build/Kconfig/Kconfig.dts",
+      15808
     ]
   ],
   [
@@ -10988,11 +11032,11 @@
     "CONFIG_USB_CDC_ACM_RINGBUF_SIZE",
     "y",
     "int",
-    "1024",
-    "default",
+    "4096",
+    "assign",
     [
-      "D:\\Users\\ORESANJO\\Downloads\\Zephyrus\\workspace\\zephyrproject\\zephyr\\subsys\\usb\\device\\class\\Kconfig.cdc",
-      23
+      "D:/Users/ORESANJO/Downloads/Zephyrus/projects/ENC/prj.conf",
+      27
     ]
   ],
   [
