@@ -531,7 +531,7 @@ set_target_properties(${DEVICETREE_TARGET} PROPERTIES "DT_PROP|/soc/qdec@4001200
 set_target_properties(${DEVICETREE_TARGET} PROPERTIES "DT_PROP|/soc/qdec@40012000|pinctrl-names" "default")
 set_target_properties(${DEVICETREE_TARGET} PROPERTIES "DT_PROP|/soc/qdec@40012000|led-pre" "0")
 set_target_properties(${DEVICETREE_TARGET} PROPERTIES "DT_PROP|/soc/qdec@40012000|steps" "24")
-set_target_properties(${DEVICETREE_TARGET} PROPERTIES "DT_PROP|/soc/qdec@40012000|nordic,period" "SAMPLEPER_8192US")
+set_target_properties(${DEVICETREE_TARGET} PROPERTIES "DT_PROP|/soc/qdec@40012000|nordic,period" "SAMPLEPER_2048US")
 set_target_properties(${DEVICETREE_TARGET} PROPERTIES "DT_PROP|/soc/qdec@40012000|status" "okay")
 set_target_properties(${DEVICETREE_TARGET} PROPERTIES "DT_PROP|/soc/qdec@40012000|compatible" "nordic,nrf-qdec")
 set_target_properties(${DEVICETREE_TARGET} PROPERTIES "DT_PROP|/soc/qdec@40012000|zephyr,deferred-init" "False")

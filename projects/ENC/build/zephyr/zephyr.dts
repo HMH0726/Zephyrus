@@ -363,7 +363,7 @@
 			pinctrl-names = "default";          /* in ..\..\projects\ENC\app.overlay:28 */
 			steps = < 0x18 >;                   /* in ..\..\projects\ENC\app.overlay:29 */
 			led-pre = < 0x0 >;                  /* in ..\..\projects\ENC\app.overlay:30 */
-			nordic,period = "SAMPLEPER_8192US"; /* in ..\..\projects\ENC\app.overlay:33 */
+			nordic,period = "SAMPLEPER_2048US"; /* in ..\..\projects\ENC\app.overlay:33 */
 		};
 
 		/* node '/soc/comparator@40013000' defined in zephyr\dts\arm\nordic\nrf52840.dtsi:335 */

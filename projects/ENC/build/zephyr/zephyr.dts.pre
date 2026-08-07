@@ -1189,7 +1189,7 @@ zephyr_udc0: &usbd {
     led-pre = <0>;
 
 
-    nordic,period = "SAMPLEPER_8192US";
+    nordic,period = "SAMPLEPER_2048US";
 };
 # 0 "<command-line>" 2
 # 1 "D:/Users/ORESANJO/Downloads/Zephyrus/workspace/zephyrproject/zephyr/misc/empty_file.c"

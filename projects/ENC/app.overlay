@@ -29,6 +29,6 @@
     steps = <24>;
     led-pre = <0>; 
     
-    /* 延長硬體採樣週期，完美過濾長達 8.19 毫秒的機械彈跳 */
-    nordic,period = "SAMPLEPER_8192US";
+    /* 改回 2048 微秒，讓晶片反應變快，捕捉快速轉動 */
+    nordic,period = "SAMPLEPER_2048US";
 };
