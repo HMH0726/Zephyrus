@@ -1,0 +1,34 @@
+/* 1. 指定系統 Console 使用 USB CDC */
+/ {
+    chosen {
+        zephyr,console = &cdc_acm_uart0;
+    };
+};
+
+/* 2. 宣告 USB CDC 節點 */
+&zephyr_udc0 {
+    cdc_acm_uart0: cdc_acm_uart0 {
+        compatible = "zephyr,cdc-acm-uart";
+    };
+};
+
+&pinctrl {
+    qdec_default: qdec_default {
+        group1 {
+            psels = <NRF_PSEL(QDEC_A, 0, 2)>,
+                    <NRF_PSEL(QDEC_B, 0, 3)>;
+            bias-pull-up;
+        };
+    };
+};
+
+&qdec {
+    status = "okay";
+    pinctrl-0 = <&qdec_default>;
+    pinctrl-names = "default";
+    steps = <24>;
+    led-pre = <0>; 
+    
+    /* 延長硬體採樣週期，完美過濾長達 8.19 毫秒的機械彈跳 */
+    nordic,period = "SAMPLEPER_8192US";
+};
