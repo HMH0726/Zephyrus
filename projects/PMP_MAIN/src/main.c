@@ -1,32 +1,45 @@
 //PMP_MAIN ORESANJO2026
 
+// 1. 標準 C 函式庫
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+// 2. Zephyr 核心與系統設定
 #include <zephyr/kernel.h>
+#include <zephyr/device.h>
+#include <zephyr/sys/reboot.h>
+#include <zephyr/settings/settings.h>
+// 3. 網路 (Networking)
 #include <zephyr/net/socket.h>
 #include <zephyr/net/net_if.h>
 #include <zephyr/net/net_ip.h>
 #include <zephyr/net/ethernet.h>
-#include <string.h>
 #include <zephyr/net/net_mgmt.h>
 #include <zephyr/net/ethernet_mgmt.h>
-#include <hal/nrf_ficr.h>
-#include <zephyr/usb/usbd.h>
-#include <zephyr/usb/usb_ch9.h>
-#include <zephyr/device.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/flash.h>
+// 4. 藍牙 (Bluetooth)
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/bluetooth/conn.h>
 #include <zephyr/bluetooth/gatt.h>
 #include <zephyr/bluetooth/uuid.h>
-#include <zephyr/settings/settings.h>
-#include <zephyr/sys/reboot.h>
-#include <stdio.h>
+// 5. USB
+#include <zephyr/usb/usbd.h>
+#include <zephyr/usb/usb_ch9.h>
+// 6. 硬體驅動與 HAL (Drivers & Hardware Abstraction Layer)
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/flash.h>
+#include <hal/nrf_ficr.h>
 
 /* =========================================================
  * 【全域設定與硬體定義區塊】
  * ========================================================= */
 #define ENABLE_CAPTIVE_PORTAL 0	// 模式切換：0 為一般穩定網卡模式，1 為強制彈窗 (Captive Portal) 模式
-#define CH_COUNT 3              // 藍牙設備的頻道總數 (支援 3 個裝置切換)
+
+#define CH_COUNT           3   // 藍牙設備的頻道總數 (支援 3 個裝置切換)
+#define PROFILE_COUNT      3   
+#define KEY_COUNT          9   
+#define WHEEL_DIR          2   // 每個滾輪有 2 個轉動方向 (索引 0:正轉, 索引 1:反轉)
+#define MAX_CH_NAME_LEN    8   // 頻道名稱最大長度
+#define MAX_PROF_NAME_LEN  8   // 配置檔名稱最大長度
 
 /* 定義 LED 腳位，從 Device Tree (DT) 中取得別名 (led0, led1, led2) */
 static const struct gpio_dt_spec led_r = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);
@@ -42,6 +55,119 @@ static struct gpio_callback clr_button_cb_data;
 /* 新增：編輯模式按鈕 (D7) */
 static const struct gpio_dt_spec editmode_button = GPIO_DT_SPEC_GET(DT_NODELABEL(editmode_btn), gpios);
 static struct gpio_callback editmode_button_cb_data;
+
+// --- 2. 獨立的頻道名稱陣列 ---
+char channel_names[CH_COUNT][MAX_CH_NAME_LEN] = {
+    "Win",   // 頻道 1
+    "Mac",   // 頻道 2
+    "iPad"   // 頻道 3
+};
+
+// --- 3. 定義單一配置檔的資料結構 (加入名稱變數) ---
+typedef struct {
+    char profile_name[MAX_PROF_NAME_LEN]; // 配置檔專屬名稱
+    uint16_t keys[KEY_COUNT];        
+    uint16_t wheel_v[WHEEL_DIR]; // 垂直滾輪 (Vertical):   [0] 向上滾, [1] 向下滾
+    uint16_t wheel_h[WHEEL_DIR]; // 水平滾輪 (Horizontal): [0] 向右滾, [1] 向左滾
+} keyboard_profile_t;
+
+// --- 4. 宣告並初始化 3x3 的二維陣列 ---
+const keyboard_profile_t key_profiles[CH_COUNT][PROFILE_COUNT] = {
+    
+    // 【頻道 1】 (索引 0) - Windows 工作站
+    {
+        // [配置 0] 日常打字與基本導覽 (依你指定的 3x3 排版)
+        {
+            .profile_name = "Basic",
+            .keys      = { 0x004B, 0x004E, 0x002C, // PageUp, PageDown, Space
+                           0x004A, 0x004D, 0x0028, // Home, End, Enter
+                           0x0052, 0x0051, 0x0029 },// 上, 下, Esc
+            .wheel_v   = { 0x0052, 0x0051 },       // 垂直滾輪: 上, 下
+            .wheel_h   = { 0x004F, 0x0050 }        // 水平滾輪: 右, 左
+        },
+        // [配置 1] 程式開發/文書快捷鍵
+        {
+            .profile_name = "Code",
+            .keys      = { 0x0104, 0x011B, 0x0106, // Ctrl+A, Ctrl+X, Ctrl+C
+                           0x0119, 0x011D, 0x011C, // Ctrl+V, Ctrl+Z, Ctrl+Y
+                           0x0109, 0x0116, 0x0128 },// Ctrl+F, Ctrl+S, Ctrl+Enter
+            .wheel_v   = { 0x0152, 0x0151 },       // 垂直滾輪: Ctrl+上, Ctrl+下 (快速捲動)
+            .wheel_h   = { 0x042B, 0x062B }        // 水平滾輪: Alt+Tab, Alt+Shift+Tab (切換視窗)
+        },
+        // [配置 2] 系統管理員極端組合鍵
+        {
+            .profile_name = "Admin",
+            .keys      = { 0x0329, 0x0A16, 0x094F, // Ctrl+Shift+Esc, Win+Shift+S, Ctrl+Win+右
+                           0x0950, 0x0807, 0x080E, // Ctrl+Win+左, Win+D, Win+K
+                           0x0B05, 0x054C, 0x043D },// Ctrl+Shift+Win+B, Ctrl+Alt+Del, Alt+F4
+            .wheel_v   = { 0x014B, 0x014E },       // 垂直滾輪: Ctrl+PageUp, Ctrl+PageDown
+            .wheel_h   = { 0x0852, 0x0851 }        // 水平滾輪: Win+上(最大化), Win+下(最小化)
+        }
+    },
+    // 【頻道 2】 (索引 1) - Mac 繪圖與設計
+    {
+        // [配置 0] Mac 系統基礎操作
+        {
+            .profile_name = "Base",
+            .keys      = { 0x0806, 0x0819, 0x081B, // Cmd+C, Cmd+V, Cmd+X
+                           0x081D, 0x0A1D, 0x0816, // Cmd+Z, Cmd+Shift+Z, Cmd+S
+                           0x0814, 0x0817, 0x082A },// Cmd+Q, Cmd+T, Cmd+Backspace
+            .wheel_v   = { 0x0852, 0x0851 },       // 垂直滾輪: Cmd+上, Cmd+下
+            .wheel_h   = { 0x084F, 0x0850 }        // 水平滾輪: Cmd+右, Cmd+左
+        },
+        // [配置 1] Photoshop 繪圖快捷鍵
+        {
+            .profile_name = "PS",
+            .keys      = { 0x0005, 0x0008, 0x0019, // B, E, V
+                           0x0010, 0x001A, 0x000C, // M, W, I
+                           0x042A, 0x0807, 0x0A11 },// Alt+Del, Cmd+D, Cmd+Shift+N
+            .wheel_v   = { 0x0030, 0x002F },       // 垂直滾輪: ], [ (調整筆刷大小)
+            .wheel_h   = { 0x082E, 0x082D }        // 水平滾輪: Cmd+=, Cmd+- (縮放畫布)
+        },
+        // [配置 2] Premiere Pro 影音剪輯
+        {
+            .profile_name = "PR",
+            .keys      = { 0x0019, 0x0006, 0x0004, // V, C, A
+                           0x0014, 0x001A, 0x0008, // Q, W, E
+                           0x002C, 0x0028, 0x0029 },// Space, Enter, Esc
+            .wheel_v   = { 0x004F, 0x0050 },       // 垂直滾輪: 右, 左 (時間軸單格前進/後退)
+            .wheel_h   = { 0x044F, 0x0450 }        // 水平滾輪: Alt+右, Alt+左 (跳躍剪輯點)
+        }
+    },
+    // 【頻道 3】 (索引 2) - iPad / 行動裝置娛樂
+    {
+        // [配置 0] 閱讀模式
+        {
+            .profile_name = "Read",
+            .keys      = { 0x004B, 0x004E, 0x002C, // PageUp, PageDown, Space
+                           0x004A, 0x004D, 0x0028, // Home, End, Enter
+                           0x0052, 0x0051, 0x0029 },// 上, 下, Esc
+            .wheel_v   = { 0x0051, 0x0052 },       // 垂直滾輪: 下滑, 上滑 (閱讀網頁)
+            .wheel_h   = { 0x004F, 0x0050 }        // 水平滾輪: 右翻頁, 左翻頁 (看電子書)
+        },
+        // [配置 1] 數字與計算機模式
+        {
+            .profile_name = "Num",
+            .keys      = { 0x0024, 0x0025, 0x0026, // 7, 8, 9
+                           0x0021, 0x0022, 0x0023, // 4, 5, 6
+                           0x001E, 0x001F, 0x0020 },// 1, 2, 3
+            .wheel_v   = { 0x0027, 0x002A },       // 垂直滾輪: 0, Backspace
+            .wheel_h   = { 0x002E, 0x002D }        // 水平滾輪: =, -
+        },
+        // [配置 2] F1~F9 功能鍵與系統控制
+        {
+            .profile_name = "Func",
+            .keys      = { 0x003A, 0x003B, 0x003C, // F1, F2, F3
+                           0x003D, 0x003E, 0x003F, // F4, F5, F6
+                           0x0040, 0x0041, 0x0042 },// F7, F8, F9
+            .wheel_v   = { 0x0817, 0x081A },       // 垂直滾輪: Cmd+T(開分頁), Cmd+W(關分頁)
+            .wheel_h   = { 0x012B, 0x032B }        // 水平滾輪: Ctrl+Tab, Ctrl+Shift+Tab (切換分頁)
+        }
+    }
+};
+
+// --- 5. 狀態變數 ---
+uint8_t current_profile = 0;
 
 /* =========================================================
  * 【狀態控制與防彈跳變數】
