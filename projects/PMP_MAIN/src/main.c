@@ -806,47 +806,59 @@ int main(void) {
                 }
             }
             
-            if (total_len > 0) {
-                /* 🌟 核心路由：攔截來自網頁的 /exit 請求 */
-                if (strstr(rx_buf, "GET /exit") != NULL) {
-                    zsock_send(client_sock, ok_response, strlen(ok_response), 0);
-                    exit_requested = true; 
-                }
-                else if (strstr(rx_buf, "GET /led/on") != NULL) {
-                    gpio_pin_set_dt(&led_g, 1);
-                    zsock_send(client_sock, ok_response, strlen(ok_response), 0);
-                } 
-                else if (strstr(rx_buf, "GET /led/off") != NULL) {
-                    gpio_pin_set_dt(&led_g, 0);
-                    zsock_send(client_sock, ok_response, strlen(ok_response), 0);
-                } 
-                else if (strstr(rx_buf, "GET /favicon.ico") != NULL) {
-                    const char *not_found = "HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n";
-                    zsock_send(client_sock, not_found, strlen(not_found), 0);
-                }
-                else if (strstr(rx_buf, "GET / ") != NULL || strstr(rx_buf, "GET /index.html") != NULL) {
-                    /* 1. 先發送 HTTP 標頭 */
-                    zsock_send(client_sock, html_header, strlen(html_header), 0);
-                    
-                    /* 2. 🛡️ 升級：大檔案分塊發送機制 (TCP Chunking) */
-                    int total_sent = 0;
-                    int html_size = sizeof(html_body);
-                    
-                    while (total_sent < html_size) {
-                        ssize_t sent = zsock_send(client_sock, html_body + total_sent, html_size - total_sent, 0);
-                        if (sent <= 0) break;
-                        total_sent += sent;
-                    }
-                }
-                else {
-#if ENABLE_CAPTIVE_PORTAL == 1
-                    zsock_send(client_sock, redirect_response, strlen(redirect_response), 0);
-#else
-                    const char *not_found = "HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n";
-                    zsock_send(client_sock, not_found, strlen(not_found), 0);
-#endif
-                }
-            }
+			if (total_len > 0) {
+							/* 🌟 核心路由：攔截來自網頁的 /exit 請求 */
+							if (strstr(rx_buf, "GET /exit") != NULL) {
+								zsock_send(client_sock, ok_response, strlen(ok_response), 0);
+								exit_requested = true; 
+							}
+							else if (strstr(rx_buf, "GET /led/on") != NULL) {
+								gpio_pin_set_dt(&led_g, 1);
+								zsock_send(client_sock, ok_response, strlen(ok_response), 0);
+							} 
+							else if (strstr(rx_buf, "GET /led/off") != NULL) {
+								gpio_pin_set_dt(&led_g, 0);
+								zsock_send(client_sock, ok_response, strlen(ok_response), 0);
+							} 
+							else if (strstr(rx_buf, "GET /favicon.ico") != NULL) {
+								const char *not_found = "HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n";
+								zsock_send(client_sock, not_found, strlen(not_found), 0);
+							}
+							/* 👇 這裡就是新增的 API，用來回傳頻道名稱 👇 */
+							else if (strstr(rx_buf, "GET /api/channels") != NULL) {
+								char json_resp[256];
+								snprintf(json_resp, sizeof(json_resp),
+										 "HTTP/1.1 200 OK\r\n"
+										 "Content-Type: application/json\r\n"
+										 "Connection: close\r\n\r\n"
+										 "[\"%s\",\"%s\",\"%s\"]",
+										 channel_names[0], channel_names[1], channel_names[2]);
+								zsock_send(client_sock, json_resp, strlen(json_resp), 0);
+							}
+							/* 👆 ========================================= 👆 */
+							else if (strstr(rx_buf, "GET / ") != NULL || strstr(rx_buf, "GET /index.html") != NULL) {
+								/* 1. 先發送 HTTP 標頭 */
+								zsock_send(client_sock, html_header, strlen(html_header), 0);
+								
+								/* 2. 🛡️ 升級：大檔案分塊發送機制 (TCP Chunking) */
+								int total_sent = 0;
+								int html_size = sizeof(html_body);
+								
+								while (total_sent < html_size) {
+									ssize_t sent = zsock_send(client_sock, html_body + total_sent, html_size - total_sent, 0);
+									if (sent <= 0) break;
+									total_sent += sent;
+								}
+							}
+							else {
+			#if ENABLE_CAPTIVE_PORTAL == 1
+								zsock_send(client_sock, redirect_response, strlen(redirect_response), 0);
+			#else
+								const char *not_found = "HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n";
+								zsock_send(client_sock, not_found, strlen(not_found), 0);
+			#endif
+							}
+						}
             
             zsock_shutdown(client_sock, ZSOCK_SHUT_WR);
             char drain_buf[128];
