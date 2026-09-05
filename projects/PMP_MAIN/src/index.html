@@ -25,191 +25,114 @@
         }
 
         .fixed-header {
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            background-color: #333; 
-            padding: 15px 0; 
+            position: fixed; top: 0; left: 0; width: 100%; 
+            background-color: #333; padding: 15px 0; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.5); 
-            z-index: 1000; 
-            display: flex; 
-            justify-content: center;
-            align-items: center;
+            z-index: 1000; display: flex; justify-content: center; align-items: center;
         }
 
-        .fixed-header h1 {
-            margin: 0; 
-            font-size: 24px;
-            color: #4CAF50; 
-        }
-
-        .custom-font {
-            font-family: 'CustomFont', sans-serif;
-            color: #aaa; 
-            font-size: 18px;
-            letter-spacing: 1px;
-        }
+        .fixed-header h1 { margin: 0; font-size: 24px; color: #4CAF50; }
+        .custom-font { font-family: 'CustomFont', sans-serif; color: #aaa; font-size: 18px; letter-spacing: 1px; }
 
         .main-content {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            min-height: calc(100vh - 80px); 
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; width: 100%; min-height: calc(100vh - 80px); 
         }
 
         /* ================== */
-        /* 頻道選擇區塊樣式   */
+        /* 頂部控制列區塊樣式 */
         /* ================== */
-        .channel-selector {
-            width: 95%;
-            max-width: 450px;
-            margin-bottom: 20px;
+        .top-controls {
+            display: flex; width: 95%; max-width: 450px;
+            border-top: 1px solid #000; border-left: 1px solid #000; margin-bottom: 20px;
         }
 
-        .channel-selector select {
-            width: 100%;
-            padding: 12px 15px;
-            font-size: 18px;
-            background-color: #333;
-            color: white;
-            border: 1px solid #555;
-            border-radius: 8px;
-            outline: none;
-            cursor: pointer;
-            font-family: inherit;
-            appearance: none; /* 隱藏原生箭頭以利自訂，或保持原樣 */
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            text-align: center;
+        .top-controls select {
+            flex: 1; min-width: 75px; padding: 10px 2px; font-size: 16px;
+            background-color: #333; color: white; border: none;
+            border-right: 1px solid #000; border-bottom: 1px solid #000;
+            border-radius: 0; outline: none; cursor: pointer; font-family: inherit;
+            appearance: none; -webkit-appearance: none; text-align: center;
         }
 
-        .channel-selector select:focus {
-            border-color: #4CAF50;
+        .top-controls select:focus { background-color: #444; }
+
+        /* Profile名稱與更名按鈕的群組 */
+        .name-edit-group {
+            display: flex; flex: 2; min-width: 220px; align-items: center;
+            background-color: #333; border: none; border-right: 1px solid #000;
+            border-bottom: 1px solid #000; border-radius: 0;
+            padding: 5px 10px; justify-content: space-between;
         }
+
+        /* 顯示模式：Channel - Profile */
+        .name-display-container {
+            display: flex; flex: 1; justify-content: center; align-items: center; 
+            gap: 5px; overflow: hidden; font-size: 16px; color: #fff; white-space: nowrap;
+        }
+
+        /* 編輯模式：兩個輸入框 */
+        .name-input-container {
+            display: none; flex: 1; justify-content: center; align-items: center; gap: 4px;
+        }
+
+        .name-input-container input {
+            width: 42%; min-width: 45px; padding: 5px; font-size: 14px;
+            background-color: #222; color: #fff; border: 1px solid #4CAF50;
+            border-radius: 4px; text-align: center; outline: none; font-family: inherit;
+        }
+
+        #renameBtn {
+            font-size: 14px; padding: 6px 10px; margin: 0 0 0 10px;
+            background-color: #4CAF50; color: white; border: none;
+            border-radius: 4px; cursor: pointer; transition: 0.2s; white-space: nowrap;
+        }
+
+        #renameBtn:hover { background-color: #45a049; }
 
         /* ================== */
         /* 上方網格區塊樣式   */
         /* ================== */
-        .container {
-            display: flex;
-            width: 95%; 
-            max-width: 450px; 
-            border-top: 1px solid #000;
-            border-left: 1px solid #000;
-            margin-bottom: 20px; /* 與狀態列留點間距 */
+        .KeyPadLayout {
+            display: flex; width: 95%; max-width: 450px; 
+            border-top: 1px solid #000; border-left: 1px solid #000; margin-bottom: 20px;
         }
 
-        .grid-3x3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            flex: 2; 
-        }
-
-        .grid-1x2 {
-            display: grid;
-            grid-template-columns: 1fr;
-            flex: 1; 
-        }
+        .grid-3x3 { display: grid; grid-template-columns: repeat(3, 1fr); flex: 2; }
+        .grid-1x2 { display: grid; grid-template-columns: 1fr; flex: 1; }
 
         .box {
-            aspect-ratio: 1 / 1; 
-            padding: 0;
-            margin: 0;
-            outline: none;
-            border: none; 
-            border-right: 1px solid #000;
-            border-bottom: 1px solid #000;
-            background-color: #f0f0f0; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 20px;
-            font-family: inherit; 
-            color: #000; /* 確保按鈕字體為深色 */
-            cursor: pointer; 
-            transition: background-color 0.1s; 
+            aspect-ratio: 1 / 1; padding: 0; margin: 0; outline: none; border: none; 
+            border-right: 1px solid #000; border-bottom: 1px solid #000;
+            background-color: #f0f0f0; display: flex; justify-content: center;
+            align-items: center; font-size: 20px; font-family: inherit; color: #000; 
+            cursor: pointer; transition: background-color 0.1s; border-radius: 0;
         }
 
-        .box:active {
-            background-color: #d0d0d0;
-        }
+        .box:active { background-color: #d0d0d0; }
 
         /* ================== */
         /* 下方狀態列區塊樣式 */
         /* ================== */
-        .display-panel {
-            width: 95%;
-            max-width: 450px;
-            /* 已經移除 margin-bottom: 40px; 將間距控制權交給 .led-controls */
-            border: 1px solid #000; 
-            display: flex;
-        }
-
+        .display-panel { width: 95%; max-width: 450px; border: 1px solid #000; display: flex; }
         .display-label {
-            background-color: #f0f0f0;
-            padding: 15px 10px;
-            border-right: 1px solid #000; 
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 120px; 
-            text-align: center;
-            color: #000; /* 強制在暗黑模式中標籤文字顯示為深色 */
+            background-color: #f0f0f0; padding: 15px 10px; border-right: 1px solid #000; 
+            font-weight: bold; display: flex; align-items: center; justify-content: center;
+            width: 120px; text-align: center; color: #000; 
         }
-
         .display-content {
-            flex: 1; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: #e74c3c; 
-            font-weight: bold;
-            background-color: transparent; /* 顯示原本的 #222 暗黑底色 */
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; color: #e74c3c; font-weight: bold; background-color: transparent; 
         }
 
-        /* ================== */
-        /* 綠燈控制按鈕區塊   */
-        /* ================== */
-        .led-controls {
-            margin-top: 30px;    /* 調整與上方狀態列的距離 */
-            margin-bottom: 10px; /* 調整與下方提示文字的距離 */
-        }
-
-        /* 原本按鈕樣式 */
-        button {
-            font-size: 24px;
-            padding: 15px 40px;
-            margin: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            border: none;
-            transition: 0.3s;
-        }
-
-        /* 複寫網格按鈕的圓角邊界設定，確保與 grid 方格切齊 */
-        .box {
-            border-radius: 0;
-            margin: 0;
-        }
-
+        .led-controls { margin-top: 30px; margin-bottom: 10px; }
+        button { font-size: 24px; padding: 15px 40px; margin: 10px; border-radius: 8px; cursor: pointer; border: none; transition: 0.3s; }
         .on-btn { background-color: #4CAF50; color: white; }
         .off-btn { background-color: #f44336; color: white; }
         .exit-btn { background-color: #555; color: white; font-size: 18px; padding: 10px 30px; margin-top: 10px; }
         .exit-btn:hover { background-color: #777; }
-        
         button:disabled { background-color: #444; color: #888; cursor: not-allowed; }
-
-        .note { color: #aaa; font-size: 15px; margin-top: 20px; line-height: 1.5; }
-        
-        .footer {
-            margin-top: 20px;
-            margin-bottom: 20px;
-        }
+        .footer { margin-top: 20px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -222,15 +145,42 @@
     <!-- === 主要內容區塊 === -->
     <div class="main-content">
         
-        <!-- === 頻道選擇區 === -->
-        <div class="channel-selector">
+        <!-- === 頂部控制列：頻道、Profile、更名群組 === -->
+        <div class="top-controls">
+            <!-- 頻道選擇 -->
             <select id="channelSelect" onchange="onChannelChange()">
-                <option value="">正在讀取頻道資料...</option>
+                <option value="">讀取中...</option>
             </select>
+
+            <!-- Profile 選擇 -->
+            <select id="profileSelect" onchange="onProfileChange()">
+                <option value="0">PF 1</option>
+                <option value="1">PF 2</option>
+                <option value="2">PF 3</option>
+            </select>
+
+            <!-- 名稱顯示與編輯 -->
+            <div class="name-edit-group">
+                <!-- 顯示模式：Channel - Profile -->
+                <div id="nameDisplayContainer" class="name-display-container">
+                    <span id="channelNameDisplay">CH</span>
+                    <span style="color: #888;">-</span>
+                    <span id="profileNameDisplay">PF</span>
+                </div>
+                
+                <!-- 編輯模式：雙輸入框 -->
+                <div id="nameInputContainer" class="name-input-container">
+                    <input type="text" id="channelNameInput" maxlength="8" placeholder="Channel">
+                    <span style="color: #888;">-</span>
+                    <input type="text" id="profileNameInput" maxlength="8" placeholder="Profile">
+                </div>
+                
+                <button id="renameBtn" onclick="toggleRename()">更名</button>
+            </div>
         </div>
 
         <!-- 上方網格區 -->
-        <div class="container">
+        <div class="KeyPadLayout">
             <div class="grid-3x3">
                 <button class="box" onclick="showSelected('1')">1</button>
                 <button class="box" onclick="showSelected('2')">2</button>
@@ -242,7 +192,6 @@
                 <button class="box" onclick="showSelected('8')">8</button>
                 <button class="box" onclick="showSelected('9')">9</button>
             </div>
-
             <div class="grid-1x2">
                 <button class="box" onclick="showSelected('A')">A</button>
                 <button class="box" onclick="showSelected('B')">B</button>
@@ -255,8 +204,7 @@
             <div class="display-content" id="selected-display">--</div>
         </div>
         
-        <!-- === 加入了 class="led-controls" === -->
-        <!-- 原本的綠燈控制按鈕 -->
+        <!-- 綠燈控制按鈕區塊 -->
         <div class="led-controls">
             <button id="btnOn" class="on-btn" onclick="sendReq('/led/on')">打開綠燈</button>
             <button id="btnOff" class="off-btn" onclick="sendReq('/led/off')">關閉綠燈</button>
@@ -265,14 +213,17 @@
         <!-- 離開按鈕 -->
         <button class="exit-btn" onclick="closeWindow()">Exit</button>
         
-        <!-- 你的專屬簽名區塊 -->
+        <!-- 簽名區塊 -->
         <div class="footer">
             © <span class="custom-font">ORESANJO</span> / <span class="custom-font">SHUNNN</span>
         </div>
-        
     </div>
 
     <script>
+        // 存放全局名稱狀態
+        let currentChannels = ["Win", "Mac", "iPad"];
+        let currentProfiles = ["PF 1", "PF 2", "PF 3"];
+
         /* ================== */
         /* 網頁載入與頻道獲取 */
         /* ================== */
@@ -281,40 +232,128 @@
                 .then(response => response.json())
                 .then(data => {
                     const selectElement = document.getElementById('channelSelect');
-                    selectElement.innerHTML = ''; // 清除預設載入文字
+                    selectElement.innerHTML = ''; 
+                    
+                    currentChannels = data; // 存下頻道陣列
 
                     data.forEach((name, index) => {
-                        // 若回傳的名稱為空字串，則顯示 "None"
                         const displayName = (name && name.trim() !== '') ? name : 'None';
                         const option = document.createElement('option');
                         option.value = index;
-                        option.textContent = `Channel ${index + 1} - ${displayName}`;
+                        option.textContent = `CH ${index + 1} - ${displayName}`;
                         selectElement.appendChild(option);
                     });
+                    
+                    // 自動觸發讀取當前頻道的 Profile
+                    onChannelChange();
                 })
                 .catch(err => {
                     console.log('讀取頻道資料失敗', err);
-                    const selectElement = document.getElementById('channelSelect');
-                    selectElement.innerHTML = '<option value="">讀取失敗，請確認連線</option>';
+                    document.getElementById('channelSelect').innerHTML = '<option value="">讀取失敗</option>';
                 });
         };
 
         /* ================== */
-        /* 頻道切換控制       */
+        /* 頻道與配置切換控制 */
         /* ================== */
         function onChannelChange() {
-            const selectElement = document.getElementById('channelSelect');
-            const selectedChannel = selectElement.value;
-            const selectedText = selectElement.options[selectElement.selectedIndex].text;
-            console.log("目前選擇的頻道索引:", selectedChannel, "名稱:", selectedText);
+            const ch = document.getElementById('channelSelect').value;
+            if (ch === "") return;
+
+            // 更新畫面上的 Channel 文字
+            const cName = currentChannels[ch] || "None";
+            document.getElementById('channelNameDisplay').textContent = cName;
+
+            // 請求該頻道的 Profile 列表
+            fetch(`/api/profiles?ch=${ch}`)
+                .then(response => response.json())
+                .then(data => {
+                    currentProfiles = data;
+                    onProfileChange();
+                })
+                .catch(err => console.log('讀取配置檔失敗', err));
+        }
+
+        function onProfileChange() {
+            const pfIndex = document.getElementById('profileSelect').value;
+            const pName = currentProfiles[pfIndex] || `預設配置 ${parseInt(pfIndex) + 1}`;
+            document.getElementById('profileNameDisplay').textContent = pName;
+        }
+
+        /* ================== */
+        /* 更名按鈕的狀態切換 */
+        /* ================== */
+        let isEditingName = false;
+        function toggleRename() {
+            const displayContainer = document.getElementById('nameDisplayContainer');
+            const inputContainer = document.getElementById('nameInputContainer');
+            
+            const cDisplay = document.getElementById('channelNameDisplay');
+            const pDisplay = document.getElementById('profileNameDisplay');
+            
+            const cInput = document.getElementById('channelNameInput');
+            const pInput = document.getElementById('profileNameInput');
+            
+            const btn = document.getElementById('renameBtn');
+            
+            const ch = document.getElementById('channelSelect').value;
+            const pf = document.getElementById('profileSelect').value;
+
+            if (!isEditingName) {
+                // 進入編輯模式：填入當前文字，切換顯示/隱藏
+                cInput.value = (cDisplay.textContent === "None") ? "" : cDisplay.textContent;
+                pInput.value = (pDisplay.textContent === "None") ? "" : pDisplay.textContent;
+                
+                displayContainer.style.display = 'none';
+                inputContainer.style.display = 'flex';
+                
+                btn.textContent = '完成';
+                btn.style.backgroundColor = '#e74c3c'; 
+                isEditingName = true;
+                cInput.focus();
+            } else {
+                // 儲存模式：讀取輸入框並發送請求
+                const newCName = cInput.value.trim() || "None";
+                const newPName = pInput.value.trim() || "None";
+                
+                const url = `/api/rename?ch=${ch}&pf=${pf}&cname=${encodeURIComponent(newCName)}&pname=${encodeURIComponent(newPName)}`;
+                
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) throw new Error("Server response wasn't OK");
+                        
+                        // 1. 更新本地陣列
+                        currentChannels[ch] = newCName;
+                        currentProfiles[pf] = newPName;
+                        
+                        // 2. 更新上方選單的選項文字
+                        const chOption = document.getElementById('channelSelect').options[ch];
+                        chOption.textContent = `CH ${parseInt(ch) + 1} - ${newCName}`;
+                        
+                        // 3. 更新顯示文字
+                        cDisplay.textContent = newCName;
+                        pDisplay.textContent = newPName;
+                        
+                        // 4. 切換回顯示模式
+                        inputContainer.style.display = 'none';
+                        displayContainer.style.display = 'flex';
+                        
+                        btn.textContent = '更名';
+                        btn.style.backgroundColor = '#4CAF50';
+                        isEditingName = false;
+                    })
+                    .catch(err => {
+                        console.log(err);
+                        alert("更名失敗，請確認與板子的連線狀態！");
+                    });
+            }
         }
 
         /* ================== */
         /* 網格按鈕的互動控制 */
         /* ================== */
         function showSelected(buttonName) {
-            const displayElement = document.getElementById('selected-display');
-            displayElement.textContent = buttonName;
+            document.getElementById('selected-display').textContent = buttonName;
         }
 
         /* ================== */

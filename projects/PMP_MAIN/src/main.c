@@ -72,7 +72,7 @@ typedef struct {
 } keyboard_profile_t;
 
 // --- 4. 宣告並初始化 3x3 的二維陣列 ---
-const keyboard_profile_t key_profiles[CH_COUNT][PROFILE_COUNT] = {
+keyboard_profile_t key_profiles[CH_COUNT][PROFILE_COUNT] = {
     
     // 【頻道 1】 (索引 0) - Windows 工作站
     {
@@ -207,6 +207,10 @@ K_WORK_DEFINE(restart_adv_work, restart_adv_work_handler); // 負責在非預期
 static int app_settings_set(const char *name, size_t len, settings_read_cb read_cb, void *cb_arg) {
     if (strcmp(name, "ch") == 0) { read_cb(cb_arg, &current_channel, sizeof(current_channel)); return 0; }
     if (strcmp(name, "ids") == 0) { read_cb(cb_arg, channel_ids, sizeof(channel_ids)); return 0; }
+    
+    if (strcmp(name, "cnames") == 0) { read_cb(cb_arg, channel_names, sizeof(channel_names)); return 0; }
+    if (strcmp(name, "profiles") == 0) { read_cb(cb_arg, key_profiles, sizeof(key_profiles)); return 0; }
+    
     return -ENOENT;
 }
 SETTINGS_STATIC_HANDLER_DEFINE(app_settings, "app", NULL, app_settings_set, NULL, NULL);
@@ -835,7 +839,88 @@ int main(void) {
 										 channel_names[0], channel_names[1], channel_names[2]);
 								zsock_send(client_sock, json_resp, strlen(json_resp), 0);
 							}
-							/* 👆 ========================================= 👆 */
+							
+							/* 👇 取得特定頻道的 Profile 列表 👇 */
+							else if (strncmp(rx_buf, "GET /api/profiles?ch=", 21) == 0) {
+								int ch = rx_buf[21] - '0';
+								char json_resp[256];
+								if (ch >= 0 && ch < CH_COUNT) {
+									snprintf(json_resp, sizeof(json_resp),
+											 "HTTP/1.1 200 OK\r\n"
+											 "Content-Type: application/json\r\n"
+											 "Connection: close\r\n\r\n"
+											 "[\"%s\",\"%s\",\"%s\"]",
+											 key_profiles[ch][0].profile_name,
+											 key_profiles[ch][1].profile_name,
+											 key_profiles[ch][2].profile_name);
+								} else {
+									snprintf(json_resp, sizeof(json_resp),
+											 "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n[]");
+								}
+								zsock_send(client_sock, json_resp, strlen(json_resp), 0);
+							}
+							/* 👇 處理重新命名請求 (同時支援 Channel 與 Profile) 👇 */
+                            else if (strncmp(rx_buf, "GET /api/rename?", 16) == 0) {
+                                char *ch_ptr = strstr(rx_buf, "ch=");
+                                char *pf_ptr = strstr(rx_buf, "pf=");
+                                char *cname_ptr = strstr(rx_buf, "cname=");
+                                char *pname_ptr = strstr(rx_buf, "pname=");
+                                
+                                if (ch_ptr && pf_ptr) {
+                                    int ch = ch_ptr[3] - '0';
+                                    int pf = pf_ptr[3] - '0';
+                                    
+                                    if (ch >= 0 && ch < CH_COUNT && pf >= 0 && pf < PROFILE_COUNT) {
+                                        
+                                        // 1. 解碼並更新 Channel 名稱
+                                        if (cname_ptr) {
+                                            char *src = cname_ptr + 6; // 略過 "cname="
+                                            char new_cname[MAX_CH_NAME_LEN] = {0};
+                                            int i = 0, j = 0;
+                                            while (src[i] != ' ' && src[i] != '&' && j < MAX_CH_NAME_LEN - 1) {
+                                                if (src[i] == '%' && src[i+1] && src[i+2]) {
+                                                    int val; sscanf(&src[i+1], "%2x", &val);
+                                                    new_cname[j++] = (char)val; i += 3;
+                                                } else if (src[i] == '+') {
+                                                    new_cname[j++] = ' '; i++;
+                                                } else {
+                                                    new_cname[j++] = src[i++];
+                                                }
+                                            }
+                                            new_cname[j] = '\0';
+                                            strncpy(channel_names[ch], new_cname, MAX_CH_NAME_LEN);
+                                            channel_names[ch][MAX_CH_NAME_LEN - 1] = '\0';
+                                        }
+
+                                        // 2. 解碼並更新 Profile 名稱
+                                        if (pname_ptr) {
+                                            char *src = pname_ptr + 6; // 略過 "pname="
+                                            char new_pname[MAX_PROF_NAME_LEN] = {0};
+                                            int i = 0, j = 0;
+                                            while (src[i] != ' ' && src[i] != '&' && j < MAX_PROF_NAME_LEN - 1) {
+                                                if (src[i] == '%' && src[i+1] && src[i+2]) {
+                                                    int val; sscanf(&src[i+1], "%2x", &val);
+                                                    new_pname[j++] = (char)val; i += 3;
+                                                } else if (src[i] == '+') {
+                                                    new_pname[j++] = ' '; i++;
+                                                } else {
+                                                    new_pname[j++] = src[i++];
+                                                }
+                                            }
+                                            new_pname[j] = '\0';
+                                            strncpy(key_profiles[ch][pf].profile_name, new_pname, MAX_PROF_NAME_LEN);
+                                            key_profiles[ch][pf].profile_name[MAX_PROF_NAME_LEN - 1] = '\0';
+                                        }
+                                    }
+                                }
+                                
+                                /* 👇 新增：將修改後的陣列永久寫入 NVS 👇 */
+                                settings_save_one("app/cnames", channel_names, sizeof(channel_names));
+                                settings_save_one("app/profiles", key_profiles, sizeof(key_profiles));
+                                
+                                zsock_send(client_sock, ok_response, strlen(ok_response), 0);
+                            }
+                            /* 👆 ========================================= 👆 */
 							else if (strstr(rx_buf, "GET / ") != NULL || strstr(rx_buf, "GET /index.html") != NULL) {
 								/* 1. 先發送 HTTP 標頭 */
 								zsock_send(client_sock, html_header, strlen(html_header), 0);
