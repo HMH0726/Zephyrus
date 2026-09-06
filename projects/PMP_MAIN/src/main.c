@@ -871,10 +871,9 @@ int main(void) {
                                     int pf = pf_ptr[3] - '0';
                                     
                                     if (ch >= 0 && ch < CH_COUNT && pf >= 0 && pf < PROFILE_COUNT) {
-                                        
                                         // 1. 解碼並更新 Channel 名稱
                                         if (cname_ptr) {
-                                            char *src = cname_ptr + 6; // 略過 "cname="
+                                            char *src = cname_ptr + 6;
                                             char new_cname[MAX_CH_NAME_LEN] = {0};
                                             int i = 0, j = 0;
                                             while (src[i] != ' ' && src[i] != '&' && j < MAX_CH_NAME_LEN - 1) {
@@ -894,7 +893,7 @@ int main(void) {
 
                                         // 2. 解碼並更新 Profile 名稱
                                         if (pname_ptr) {
-                                            char *src = pname_ptr + 6; // 略過 "pname="
+                                            char *src = pname_ptr + 6;
                                             char new_pname[MAX_PROF_NAME_LEN] = {0};
                                             int i = 0, j = 0;
                                             while (src[i] != ' ' && src[i] != '&' && j < MAX_PROF_NAME_LEN - 1) {
@@ -911,13 +910,85 @@ int main(void) {
                                             strncpy(key_profiles[ch][pf].profile_name, new_pname, MAX_PROF_NAME_LEN);
                                             key_profiles[ch][pf].profile_name[MAX_PROF_NAME_LEN - 1] = '\0';
                                         }
+
+                                        // 永久寫入 NVS
+                                        settings_save_one("app/cnames", channel_names, sizeof(channel_names));
+                                        settings_save_one("app/profiles", key_profiles, sizeof(key_profiles));
                                     }
                                 }
-                                
-                                /* 👇 新增：將修改後的陣列永久寫入 NVS 👇 */
-                                settings_save_one("app/cnames", channel_names, sizeof(channel_names));
-                                settings_save_one("app/profiles", key_profiles, sizeof(key_profiles));
-                                
+                                zsock_send(client_sock, ok_response, strlen(ok_response), 0);
+                            }
+
+							/* 👇 取得當前 Profile 的按鍵配置 (回傳 13 顆按鍵的 16-bit 鍵碼) 👇 */
+                            else if (strncmp(rx_buf, "GET /api/keys?", 14) == 0) {
+                                char *ch_ptr = strstr(rx_buf, "ch=");
+                                char *pf_ptr = strstr(rx_buf, "pf=");
+                                char json_resp[384];
+
+                                if (ch_ptr && pf_ptr) {
+                                    int ch = ch_ptr[3] - '0';
+                                    int pf = pf_ptr[3] - '0';
+
+                                    if (ch >= 0 && ch < CH_COUNT && pf >= 0 && pf < PROFILE_COUNT) {
+                                        snprintf(json_resp, sizeof(json_resp),
+                                                 "HTTP/1.1 200 OK\r\n"
+                                                 "Content-Type: application/json\r\n"
+                                                 "Connection: close\r\n\r\n"
+                                                 "{\"1\":%u,\"2\":%u,\"3\":%u,\"4\":%u,\"5\":%u,\"6\":%u,\"7\":%u,\"8\":%u,\"9\":%u,"
+                                                 "\"A_FWD\":%u,\"A_REV\":%u,\"B_R\":%u,\"B_L\":%u}",
+                                                 key_profiles[ch][pf].keys[0], key_profiles[ch][pf].keys[1],
+                                                 key_profiles[ch][pf].keys[2], key_profiles[ch][pf].keys[3],
+                                                 key_profiles[ch][pf].keys[4], key_profiles[ch][pf].keys[5],
+                                                 key_profiles[ch][pf].keys[6], key_profiles[ch][pf].keys[7],
+                                                 key_profiles[ch][pf].keys[8],
+                                                 key_profiles[ch][pf].wheel_v[0], key_profiles[ch][pf].wheel_v[1],
+                                                 key_profiles[ch][pf].wheel_h[0], key_profiles[ch][pf].wheel_h[1]);
+                                    } else {
+                                        snprintf(json_resp, sizeof(json_resp), "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n{}");
+                                    }
+                                } else {
+                                    snprintf(json_resp, sizeof(json_resp), "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n{}");
+                                }
+                                zsock_send(client_sock, json_resp, strlen(json_resp), 0);
+                            }
+
+                            /* 👇 設定單顆按鍵快捷鍵並永久寫入 NVS 👇 */
+                            else if (strncmp(rx_buf, "GET /api/setkey?", 16) == 0) {
+                                char *ch_ptr = strstr(rx_buf, "ch=");
+                                char *pf_ptr = strstr(rx_buf, "pf=");
+                                char *id_ptr = strstr(rx_buf, "id=");
+                                char *code_ptr = strstr(rx_buf, "code=");
+
+                                if (ch_ptr && pf_ptr && id_ptr && code_ptr) {
+                                    int ch = ch_ptr[3] - '0';
+                                    int pf = pf_ptr[3] - '0';
+                                    uint16_t code = (uint16_t)strtoul(code_ptr + 5, NULL, 10);
+
+                                    char id_str[8] = {0};
+                                    int idx = 0;
+                                    char *src = id_ptr + 3;
+                                    while (src[idx] != '&' && src[idx] != ' ' && idx < sizeof(id_str) - 1) {
+                                        id_str[idx] = src[idx];
+                                        idx++;
+                                    }
+                                    id_str[idx] = '\0';
+
+                                    if (ch >= 0 && ch < CH_COUNT && pf >= 0 && pf < PROFILE_COUNT) {
+                                        if (id_str[0] >= '1' && id_str[0] <= '9' && id_str[1] == '\0') {
+                                            key_profiles[ch][pf].keys[id_str[0] - '1'] = code;
+                                        } else if (strcmp(id_str, "A_FWD") == 0) {
+                                            key_profiles[ch][pf].wheel_v[0] = code;
+                                        } else if (strcmp(id_str, "A_REV") == 0) {
+                                            key_profiles[ch][pf].wheel_v[1] = code;
+                                        } else if (strcmp(id_str, "B_R") == 0) {
+                                            key_profiles[ch][pf].wheel_h[0] = code;
+                                        } else if (strcmp(id_str, "B_L") == 0) {
+                                            key_profiles[ch][pf].wheel_h[1] = code;
+                                        }
+
+                                        settings_save_one("app/profiles", key_profiles, sizeof(key_profiles));
+                                    }
+                                }
                                 zsock_send(client_sock, ok_response, strlen(ok_response), 0);
                             }
                             /* 👆 ========================================= 👆 */
@@ -957,7 +1028,9 @@ int main(void) {
         // 離開編輯模式的清理
         /* 🛑 軟重啟退出機制：乾淨俐落避開所有作業系統 Bug */
         printk("\n>>> 收到 EXIT 請求，系統即將重新啟動以安全退出編輯模式...\n");
-        k_sleep(K_MSEC(500)); // 給 TCP 回覆一點時間傳送出去
+        k_sleep(K_MSEC(1000)); // 給 TCP 回覆一點時間傳送出去
+		usbd_disable(&sample_usbd); // 主動卸載 USB 設備
+        k_sleep(K_MSEC(100));
         sys_reboot(SYS_REBOOT_WARM);
     }
     
