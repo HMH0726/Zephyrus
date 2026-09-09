@@ -20,7 +20,7 @@
 		zephyr,uart-mcumgr = &board_cdc_acm_uart;    /* in zephyr\boards\common\usb\cdc_acm_serial.dtsi:11 */
 		zephyr,bt-mon-uart = &board_cdc_acm_uart;    /* in zephyr\boards\common\usb\cdc_acm_serial.dtsi:12 */
 		zephyr,bt-c2h-uart = &board_cdc_acm_uart;    /* in zephyr\boards\common\usb\cdc_acm_serial.dtsi:13 */
-		zephyr,console = &cdc_acm_uart0;             /* in ..\..\projects\ENC\app.overlay:9 */
+		zephyr,console = &cdc_acm_uart0;             /* in ..\..\projects\ENC\app.overlay:10 */
 	};
 
 	/* node '/aliases' defined in zephyr\dts\common\skeleton.dtsi:15 */
@@ -224,20 +224,20 @@
 			interrupts = < 0x4 0x1 >;       /* in zephyr\dts\arm\nordic\nrf52840.dtsi:212 */
 			max-frequency = < 0x7a1200 >;   /* in zephyr\dts\arm\nordic\nrf52840.dtsi:213 */
 			easydma-maxcnt-bits = < 0x10 >; /* in zephyr\dts\arm\nordic\nrf52840.dtsi:214 */
-			compatible = "nordic,nrf-spim"; /* in ..\..\projects\ENC\app.overlay:105 */
-			status = "okay";                /* in ..\..\projects\ENC\app.overlay:106 */
-			pinctrl-0 = < &spi1_default >;  /* in ..\..\projects\ENC\app.overlay:107 */
-			pinctrl-names = "default";      /* in ..\..\projects\ENC\app.overlay:108 */
+			compatible = "nordic,nrf-spim"; /* in ..\..\projects\ENC\app.overlay:106 */
+			status = "okay";                /* in ..\..\projects\ENC\app.overlay:107 */
+			pinctrl-0 = < &spi1_default >;  /* in ..\..\projects\ENC\app.overlay:108 */
+			pinctrl-names = "default";      /* in ..\..\projects\ENC\app.overlay:109 */
 
-			/* node '/soc/spi@40004000/ws2812@0' defined in ..\..\projects\ENC\app.overlay:110 */
+			/* node '/soc/spi@40004000/ws2812@0' defined in ..\..\projects\ENC\app.overlay:111 */
 			led_strip: ws2812@0 {
-				compatible = "worldsemi,ws2812-spi"; /* in ..\..\projects\ENC\app.overlay:111 */
-				reg = < 0x0 >;                       /* in ..\..\projects\ENC\app.overlay:112 */
-				spi-max-frequency = < 0x3d0900 >;    /* in ..\..\projects\ENC\app.overlay:113 */
-				chain-length = < 0x6 >;              /* in ..\..\projects\ENC\app.overlay:114 */
-				spi-one-frame = < 0x70 >;            /* in ..\..\projects\ENC\app.overlay:115 */
-				spi-zero-frame = < 0x40 >;           /* in ..\..\projects\ENC\app.overlay:116 */
-				color-mapping = < 0x2 0x1 0x3 >;     /* in ..\..\projects\ENC\app.overlay:117 */
+				compatible = "worldsemi,ws2812-spi"; /* in ..\..\projects\ENC\app.overlay:112 */
+				reg = < 0x0 >;                       /* in ..\..\projects\ENC\app.overlay:113 */
+				spi-max-frequency = < 0x3d0900 >;    /* in ..\..\projects\ENC\app.overlay:114 */
+				chain-length = < 0x6 >;              /* in ..\..\projects\ENC\app.overlay:115 */
+				spi-one-frame = < 0x70 >;            /* in ..\..\projects\ENC\app.overlay:116 */
+				spi-zero-frame = < 0x40 >;           /* in ..\..\projects\ENC\app.overlay:117 */
+				color-mapping = < 0x2 0x1 0x3 >;     /* in ..\..\projects\ENC\app.overlay:118 */
 			};
 		};
 
@@ -371,12 +371,12 @@
 			compatible = "nordic,nrf-qdec";     /* in zephyr\dts\arm\nordic\nrf52840.dtsi:329 */
 			reg = < 0x40012000 0x1000 >;        /* in zephyr\dts\arm\nordic\nrf52840.dtsi:330 */
 			interrupts = < 0x12 0x1 >;          /* in zephyr\dts\arm\nordic\nrf52840.dtsi:331 */
-			status = "okay";                    /* in ..\..\projects\ENC\app.overlay:95 */
-			pinctrl-0 = < &qdec_default >;      /* in ..\..\projects\ENC\app.overlay:96 */
-			pinctrl-names = "default";          /* in ..\..\projects\ENC\app.overlay:97 */
-			steps = < 0x18 >;                   /* in ..\..\projects\ENC\app.overlay:98 */
-			led-pre = < 0x0 >;                  /* in ..\..\projects\ENC\app.overlay:99 */
-			nordic,period = "SAMPLEPER_1024US"; /* in ..\..\projects\ENC\app.overlay:100 */
+			status = "okay";                    /* in ..\..\projects\ENC\app.overlay:96 */
+			pinctrl-0 = < &qdec_default >;      /* in ..\..\projects\ENC\app.overlay:97 */
+			pinctrl-names = "default";          /* in ..\..\projects\ENC\app.overlay:98 */
+			steps = < 0x18 >;                   /* in ..\..\projects\ENC\app.overlay:99 */
+			led-pre = < 0x0 >;                  /* in ..\..\projects\ENC\app.overlay:100 */
+			nordic,period = "SAMPLEPER_1024US"; /* in ..\..\projects\ENC\app.overlay:101 */
 		};
 
 		/* node '/soc/comparator@40013000' defined in zephyr\dts\arm\nordic\nrf52840.dtsi:335 */
@@ -633,9 +633,9 @@
 				compatible = "zephyr,cdc-acm-uart"; /* in zephyr\boards\common\usb\cdc_acm_serial.dtsi:19 */
 			};
 
-			/* node '/soc/usbd@40027000/cdc_acm_uart0' defined in ..\..\projects\ENC\app.overlay:69 */
+			/* node '/soc/usbd@40027000/cdc_acm_uart0' defined in ..\..\projects\ENC\app.overlay:70 */
 			cdc_acm_uart0: cdc_acm_uart0 {
-				compatible = "zephyr,cdc-acm-uart"; /* in ..\..\projects\ENC\app.overlay:70 */
+				compatible = "zephyr,cdc-acm-uart"; /* in ..\..\projects\ENC\app.overlay:71 */
 			};
 		};
 
@@ -943,25 +943,25 @@
 			};
 		};
 
-		/* node '/pin-controller/qdec_default' defined in ..\..\projects\ENC\app.overlay:77 */
+		/* node '/pin-controller/qdec_default' defined in ..\..\projects\ENC\app.overlay:78 */
 		qdec_default: qdec_default {
-			phandle = < 0x7 >; /* in ..\..\projects\ENC\app.overlay:96 */
+			phandle = < 0x7 >; /* in ..\..\projects\ENC\app.overlay:97 */
 
-			/* node '/pin-controller/qdec_default/group1' defined in ..\..\projects\ENC\app.overlay:78 */
+			/* node '/pin-controller/qdec_default/group1' defined in ..\..\projects\ENC\app.overlay:79 */
 			group1 {
 				psels = < 0x1a000002 >,
-				        < 0x1b000003 >; /* in ..\..\projects\ENC\app.overlay:79 */
-				bias-pull-up;           /* in ..\..\projects\ENC\app.overlay:81 */
+				        < 0x1b000003 >; /* in ..\..\projects\ENC\app.overlay:80 */
+				bias-pull-up;           /* in ..\..\projects\ENC\app.overlay:82 */
 			};
 		};
 
-		/* node '/pin-controller/spi1_default' defined in ..\..\projects\ENC\app.overlay:86 */
+		/* node '/pin-controller/spi1_default' defined in ..\..\projects\ENC\app.overlay:87 */
 		spi1_default: spi1_default {
-			phandle = < 0x6 >; /* in ..\..\projects\ENC\app.overlay:107 */
+			phandle = < 0x6 >; /* in ..\..\projects\ENC\app.overlay:108 */
 
-			/* node '/pin-controller/spi1_default/group1' defined in ..\..\projects\ENC\app.overlay:87 */
+			/* node '/pin-controller/spi1_default/group1' defined in ..\..\projects\ENC\app.overlay:88 */
 			group1 {
-				psels = < 0x500002d >; /* in ..\..\projects\ENC\app.overlay:88 */
+				psels = < 0x500002d >; /* in ..\..\projects\ENC\app.overlay:89 */
 			};
 		};
 	};
@@ -1067,56 +1067,56 @@
 		};
 	};
 
-	/* node '/qdec_soft' defined in ..\..\projects\ENC\app.overlay:13 */
+	/* node '/qdec_soft' defined in ..\..\projects\ENC\app.overlay:14 */
 	encoder_2: qdec_soft {
-		compatible = "gpio-qdec";     /* in ..\..\projects\ENC\app.overlay:14 */
+		compatible = "gpio-qdec";     /* in ..\..\projects\ENC\app.overlay:15 */
 		gpios = < &gpio0 0x1c 0x10 >,
-		        < &gpio0 0x1d 0x10 >; /* in ..\..\projects\ENC\app.overlay:16 */
-		steps-per-period = < 0x4 >;   /* in ..\..\projects\ENC\app.overlay:18 */
-		zephyr,axis = < 0x8 >;        /* in ..\..\projects\ENC\app.overlay:19 */
-		sample-time-us = < 0x7d0 >;   /* in ..\..\projects\ENC\app.overlay:20 */
-		idle-timeout-ms = < 0xfa >;   /* in ..\..\projects\ENC\app.overlay:21 */
+		        < &gpio0 0x1d 0x10 >; /* in ..\..\projects\ENC\app.overlay:17 */
+		steps-per-period = < 0x4 >;   /* in ..\..\projects\ENC\app.overlay:19 */
+		zephyr,axis = < 0x8 >;        /* in ..\..\projects\ENC\app.overlay:20 */
+		sample-time-us = < 0x7d0 >;   /* in ..\..\projects\ENC\app.overlay:21 */
+		idle-timeout-ms = < 0xfa >;   /* in ..\..\projects\ENC\app.overlay:22 */
 	};
 
-	/* node '/buttons' defined in ..\..\projects\ENC\app.overlay:25 */
+	/* node '/buttons' defined in ..\..\projects\ENC\app.overlay:26 */
 	buttons: buttons {
-		compatible = "gpio-keys"; /* in ..\..\projects\ENC\app.overlay:26 */
+		compatible = "gpio-keys"; /* in ..\..\projects\ENC\app.overlay:27 */
 
-		/* node '/buttons/enc_sw1' defined in ..\..\projects\ENC\app.overlay:27 */
+		/* node '/buttons/enc_sw1' defined in ..\..\projects\ENC\app.overlay:28 */
 		enc_sw1: enc_sw1 {
-			gpios = < &gpio0 0x4 0x11 >; /* in ..\..\projects\ENC\app.overlay:28 */
-			label = "Encoder 1 Switch";  /* in ..\..\projects\ENC\app.overlay:29 */
+			gpios = < &gpio0 0x4 0x11 >; /* in ..\..\projects\ENC\app.overlay:29 */
+			label = "Encoder 1 Switch";  /* in ..\..\projects\ENC\app.overlay:30 */
 		};
 
-		/* node '/buttons/enc_sw2' defined in ..\..\projects\ENC\app.overlay:31 */
+		/* node '/buttons/enc_sw2' defined in ..\..\projects\ENC\app.overlay:32 */
 		enc_sw2: enc_sw2 {
-			gpios = < &gpio0 0x5 0x11 >; /* in ..\..\projects\ENC\app.overlay:32 */
-			label = "Encoder 2 Switch";  /* in ..\..\projects\ENC\app.overlay:33 */
+			gpios = < &gpio0 0x5 0x11 >; /* in ..\..\projects\ENC\app.overlay:33 */
+			label = "Encoder 2 Switch";  /* in ..\..\projects\ENC\app.overlay:34 */
 		};
 
-		/* node '/buttons/set_btn1' defined in ..\..\projects\ENC\app.overlay:35 */
+		/* node '/buttons/set_btn1' defined in ..\..\projects\ENC\app.overlay:36 */
 		set_btn1: set_btn1 {
-			gpios = < &gpio1 0xb 0x11 >; /* in ..\..\projects\ENC\app.overlay:36 */
-			label = "Setting Button 1";  /* in ..\..\projects\ENC\app.overlay:37 */
+			gpios = < &gpio1 0xb 0x11 >; /* in ..\..\projects\ENC\app.overlay:37 */
+			label = "Setting Button 1";  /* in ..\..\projects\ENC\app.overlay:38 */
 		};
 
-		/* node '/buttons/set_btn2' defined in ..\..\projects\ENC\app.overlay:39 */
+		/* node '/buttons/set_btn2' defined in ..\..\projects\ENC\app.overlay:40 */
 		set_btn2: set_btn2 {
-			gpios = < &gpio1 0xc 0x11 >; /* in ..\..\projects\ENC\app.overlay:40 */
-			label = "Setting Button 2";  /* in ..\..\projects\ENC\app.overlay:41 */
+			gpios = < &gpio1 0xc 0x11 >; /* in ..\..\projects\ENC\app.overlay:41 */
+			label = "Setting Button 2";  /* in ..\..\projects\ENC\app.overlay:42 */
 		};
 	};
 
-	/* node '/kscan0' defined in ..\..\projects\ENC\app.overlay:46 */
+	/* node '/kscan0' defined in ..\..\projects\ENC\app.overlay:47 */
 	kscan0: kscan0 {
-		compatible = "zephyr,kscan-gpio-matrix"; /* in ..\..\projects\ENC\app.overlay:47 */
-		label = "MATRIX_KEYPAD";                 /* in ..\..\projects\ENC\app.overlay:48 */
-		diode-direction = "col2row";             /* in ..\..\projects\ENC\app.overlay:49 */
+		compatible = "zephyr,kscan-gpio-matrix"; /* in ..\..\projects\ENC\app.overlay:48 */
+		label = "MATRIX_KEYPAD";                 /* in ..\..\projects\ENC\app.overlay:49 */
+		diode-direction = "col2row";             /* in ..\..\projects\ENC\app.overlay:50 */
 		row-gpios = < &gpio0 0xf 0x20 >,
 		            < &gpio0 0x13 0x20 >,
-		            < &gpio1 0x1 0x20 >;         /* in ..\..\projects\ENC\app.overlay:52 */
+		            < &gpio1 0x1 0x20 >;         /* in ..\..\projects\ENC\app.overlay:53 */
 		col-gpios = < &gpio0 0x1f 0x0 >,
 		            < &gpio1 0x3 0x0 >,
-		            < &gpio1 0x5 0x0 >;          /* in ..\..\projects\ENC\app.overlay:57 */
+		            < &gpio1 0x5 0x0 >;          /* in ..\..\projects\ENC\app.overlay:58 */
 	};
 };

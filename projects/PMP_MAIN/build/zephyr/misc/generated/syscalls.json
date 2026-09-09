@@ -713,6 +713,62 @@
     ],
     [
         [
+            "int sensor_attr_set",
+            "const struct device *dev, enum sensor_channel chan, enum sensor_attribute attr, const struct sensor_value *val"
+        ],
+        "sensor.h",
+        true
+    ],
+    [
+        [
+            "int sensor_attr_get",
+            "const struct device *dev, enum sensor_channel chan, enum sensor_attribute attr, struct sensor_value *val"
+        ],
+        "sensor.h",
+        true
+    ],
+    [
+        [
+            "int sensor_sample_fetch",
+            "const struct device *dev"
+        ],
+        "sensor.h",
+        true
+    ],
+    [
+        [
+            "int sensor_sample_fetch_chan",
+            "const struct device *dev, enum sensor_channel type"
+        ],
+        "sensor.h",
+        true
+    ],
+    [
+        [
+            "int sensor_channel_get",
+            "const struct device *dev, enum sensor_channel chan, struct sensor_value *val"
+        ],
+        "sensor.h",
+        true
+    ],
+    [
+        [
+            "int sensor_get_decoder",
+            "const struct device *dev, const struct sensor_decoder_api **decoder"
+        ],
+        "sensor.h",
+        true
+    ],
+    [
+        [
+            "int sensor_reconfigure_read_iodev",
+            "const struct rtio_iodev *iodev, const struct device *sensor, const struct sensor_chan_spec *channels, size_t num_channels"
+        ],
+        "sensor.h",
+        true
+    ],
+    [
+        [
             "int uart_err_check",
             "const struct device *dev"
         ],
@@ -3837,62 +3893,6 @@
             "const struct device *dev, int sources"
         ],
         "sdhc.h",
-        false
-    ],
-    [
-        [
-            "int sensor_attr_set",
-            "const struct device *dev, enum sensor_channel chan, enum sensor_attribute attr, const struct sensor_value *val"
-        ],
-        "sensor.h",
-        false
-    ],
-    [
-        [
-            "int sensor_attr_get",
-            "const struct device *dev, enum sensor_channel chan, enum sensor_attribute attr, struct sensor_value *val"
-        ],
-        "sensor.h",
-        false
-    ],
-    [
-        [
-            "int sensor_sample_fetch",
-            "const struct device *dev"
-        ],
-        "sensor.h",
-        false
-    ],
-    [
-        [
-            "int sensor_sample_fetch_chan",
-            "const struct device *dev, enum sensor_channel type"
-        ],
-        "sensor.h",
-        false
-    ],
-    [
-        [
-            "int sensor_channel_get",
-            "const struct device *dev, enum sensor_channel chan, struct sensor_value *val"
-        ],
-        "sensor.h",
-        false
-    ],
-    [
-        [
-            "int sensor_get_decoder",
-            "const struct device *dev, const struct sensor_decoder_api **decoder"
-        ],
-        "sensor.h",
-        false
-    ],
-    [
-        [
-            "int sensor_reconfigure_read_iodev",
-            "const struct rtio_iodev *iodev, const struct device *sensor, const struct sensor_chan_spec *channels, size_t num_channels"
-        ],
-        "sensor.h",
         false
     ],
     [

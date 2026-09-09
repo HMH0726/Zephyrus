@@ -3,13 +3,13 @@
         usbd0 = &zephyr_udc0;
     };
     
-    /* 按鈕配置：CH_Switch(D1) / ALL_CLR(D6) / Edit_Mode(D7) */
+    /* 按鈕配置：CH_Switch / ALL_CLR(D6) / Edit_Mode(D7) */
     buttons {
         compatible = "gpio-keys";
         
-        /* 頻道切換按鈕 (對應板子實體引腳 D1，晶片腳位 P0.03) */
+        /* 頻道切換按鈕 (避開 D1，改對應編碼器 1 下壓鍵 D4 / P0.04) */
         switch_btn: button_0 {
-            gpios = <&gpio0 3 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+            gpios = <&gpio0 4 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
             label = "Channel Switch Button";
         };
 
@@ -27,6 +27,28 @@
     };
 };
 
+/* 定義硬體腳位功能 (Pinctrl) */
+&pinctrl {
+    /* 編碼器 1 (大旋鈕：A 相接 D0, B 相接 D1) */
+    qdec_default: qdec_default {
+        group1 {
+            psels = <NRF_PSEL(QDEC_A, 0, 2)>,
+                    <NRF_PSEL(QDEC_B, 0, 3)>;
+            bias-pull-up;
+        };
+    };
+};
+
+/* 硬體 QDEC 設定 */
+&qdec {
+    status = "okay";
+    pinctrl-0 = <&qdec_default>;
+    pinctrl-names = "default";
+    steps = <24>;
+    led-pre = <0>;
+};
+
+/* USB CDC-NCM 虛擬網卡 (保留 192.168.4.1 網頁面板傳輸) */
 &zephyr_udc0 {
     status = "okay";
     cdc_ncm_0: cdc_ncm_0 {

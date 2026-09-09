@@ -6,12 +6,6 @@
     <title>XIAO 控制面板</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        /* 載入客製化字型 */
-        @font-face {
-            font-family: 'CustomFont';
-            src: url(data:font/ttf;base64,T1RUTAAA==) format('truetype');
-        }
-
         body {
             display: flex; flex-direction: column; align-items: center;
             margin: 0; padding-top: 80px; background-color: #222; 
@@ -26,7 +20,7 @@
         }
 
         .fixed-header h1 { margin: 0; font-size: 24px; color: #4CAF50; }
-        .custom-font { font-family: 'CustomFont', sans-serif; color: #aaa; font-size: 18px; letter-spacing: 1px; }
+        .custom-font { font-family: monospace, sans-serif; color: #aaa; font-size: 18px; letter-spacing: 1px; }
 
         .main-content {
             display: flex; flex-direction: column; justify-content: flex-start;
@@ -34,9 +28,6 @@
             padding-bottom: 50px;
         }
 
-        /* ================== */
-        /* 頂部控制列區塊樣式 */
-        /* ================== */
         .top-controls {
             display: flex; width: 95%; max-width: 450px;
             border-top: 1px solid #000; border-left: 1px solid #000; margin-bottom: 20px;
@@ -54,7 +45,6 @@
         .top-controls select:hover { background-color: #3d3d3d; }
         .top-controls select:focus { background-color: #444; }
 
-        /* Profile名稱與更名按鈕的群組 */
         .name-edit-group {
             display: flex; flex: 2; min-width: 220px; align-items: center;
             background-color: #333; border: none; border-right: 1px solid #000;
@@ -86,9 +76,6 @@
         #renameBtn:hover { background-color: #45a049; }
         #renameBtn:active { background-color: #388e3c; }
 
-        /* ================== */
-        /* 上方網格區塊樣式   */
-        /* ================== */
         .KeyPadLayout {
             display: flex; width: 95%; max-width: 450px; 
             border-top: 1px solid #000; border-left: 1px solid #000; margin-bottom: 20px;
@@ -97,7 +84,6 @@
         .grid-3x3 { display: grid; grid-template-columns: repeat(3, 1fr); flex: 2; }
         .grid-1x2 { display: grid; grid-template-columns: 1fr; flex: 1; }
 
-        /* 一般按鍵方塊 (1~9) */
         .box {
             aspect-ratio: 1 / 1; padding: 5px; margin: 0; outline: none; border: none; 
             border-right: 1px solid #000; border-bottom: 1px solid #000;
@@ -117,7 +103,6 @@
         .btn-title { font-size: 20px; font-weight: bold; pointer-events: none;}
         .btn-desc { font-size: 10px; color: #555; margin-top: 4px; word-break: break-all; pointer-events: none; line-height: 1.1;}
 
-        /* 滾輪專用方塊 (A, B) */
         .encoder-box {
             position: relative;
             padding: 0;
@@ -138,7 +123,6 @@
             flex-direction: row;
         }
 
-        /* 中央大字標題 */
         .encoder-center-title {
             position: absolute;
             top: 50%;
@@ -151,7 +135,6 @@
             z-index: 2;
         }
 
-        /* 滾輪內部感應按鈕通用樣式 */
         .encoder-sub-btn {
             margin: 0;
             background-color: transparent;
@@ -173,7 +156,6 @@
         .encoder-sub-btn.selected:hover { background-color: #8fc892; }
         .encoder-sub-btn.selected:active { background-color: #70b274 !important; }
 
-        /* 垂直滾輪 A (上下分割) */
         .encoder-box.vertical .encoder-sub-btn {
             width: 100%;
             height: 50%;
@@ -183,14 +165,12 @@
         .encoder-box.vertical .encoder-sub-btn.top { align-items: flex-start; }
         .encoder-box.vertical .encoder-sub-btn.bottom { align-items: flex-end; }
 
-        /* 水平滾輪 B (左右分割) */
         .encoder-box.horizontal .encoder-sub-btn {
             width: 50%;
             height: 100%;
             margin: 0;
         }
 
-        /* B 滾輪上下文字顯示層 (可點擊) */
         .encoder-text-top {
             position: absolute;
             top: 6px;
@@ -215,7 +195,6 @@
 
         .encoder-text-top:hover, .encoder-text-bottom:hover { color: #000; }
 
-        /* B 滾輪：文字與按鈕聯動樣式 */
         #box-B:has(#desc-B_L:hover) #btn-B_L:not(.selected) { background-color: #dedede; }
         #box-B:has(#desc-B_L:active) #btn-B_L:not(.selected) { background-color: #bcbcbc; }
         #box-B:has(#desc-B_L:hover) #btn-B_L.selected { background-color: #8fc892; }
@@ -240,9 +219,6 @@
             line-height: 1.1;
         }
 
-        /* ================== */
-        /* 下方快捷鍵設定區   */
-        /* ================== */
         .config-panel {
             width: 95%; max-width: 450px; border: 1px solid #000; display: flex; flex-direction: column;
             background-color: #333; margin-bottom: 20px; box-sizing: border-box;
@@ -288,10 +264,51 @@
         .set-btn:hover { background-color: #45a049; }
         .set-btn:active { background-color: #388e3c; }
 
-        /* ================== */
-        /* 系統按鈕區         */
-        /* ================== */
-        .led-controls { margin-top: 10px; margin-bottom: 10px; }
+        .encoder-monitor {
+            width: 95%; max-width: 450px; border: 1px solid #000;
+            background-color: #333; margin-bottom: 20px; box-sizing: border-box;
+            display: flex; flex-direction: column; padding: 12px;
+        }
+
+        .monitor-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #444;
+        }
+
+        .monitor-title { font-size: 14px; font-weight: bold; color: #4CAF50; }
+
+        .monitor-stats-grid {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 10px;
+        }
+
+        .stat-card {
+            background-color: #222; padding: 8px 4px; border-radius: 4px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .stat-name { font-size: 11px; color: #888; margin-bottom: 2px; }
+        .stat-value { font-size: 14px; font-weight: bold; color: #fff; }
+        .stat-value.active-dir { color: #4CAF50; }
+
+        .terminal-container {
+            width: 100%; box-sizing: border-box; background-color: #151515;
+            border: 1px solid #444; border-radius: 4px; padding: 8px;
+            font-family: monospace; font-size: 11px; height: 95px;
+            overflow-y: auto; text-align: left; line-height: 1.4; color: #aaa;
+        }
+
+        .terminal-log-entry { margin: 2px 0; word-break: break-all; }
+        .log-time { color: #666; margin-right: 4px; }
+        .log-dir-r { color: #4CAF50; font-weight: bold; }
+        .log-dir-l { color: #2196F3; font-weight: bold; }
+
+        .clear-log-btn {
+            font-size: 11px; padding: 3px 8px; background-color: #555;
+            color: #fff; border: none; border-radius: 4px; cursor: pointer;
+        }
+        .clear-log-btn:hover { background-color: #666; }
+
+        .led-controls { margin-top: 5px; margin-bottom: 10px; }
         .sys-btn { font-size: 18px; padding: 12px 30px; margin: 5px; border-radius: 8px; cursor: pointer; border: none; transition: 0.15s; }
         .on-btn { background-color: #4CAF50; color: white; }
         .on-btn:hover { background-color: #45a049; }
@@ -315,7 +332,6 @@
     </div>
 
     <div class="main-content">
-        <!-- 頂部控制列 -->
         <div class="top-controls">
             <select id="channelSelect" onchange="onChannelChange()"><option value="">讀取中...</option></select>
             <select id="profileSelect" onchange="onProfileChange()">
@@ -334,7 +350,6 @@
             </div>
         </div>
 
-        <!-- 網格區 -->
         <div class="KeyPadLayout">
             <div class="grid-3x3">
                 <button class="box" id="btn-1" onclick="selectButton('1')"><span class="btn-title">1</span><span class="btn-desc" id="desc-1"></span></button>
@@ -349,7 +364,6 @@
             </div>
             
             <div class="grid-1x2">
-                <!-- 垂直滾輪 A：上下分割（前 / 後） -->
                 <div class="box encoder-box vertical" id="box-A">
                     <button type="button" class="encoder-sub-btn top" id="btn-A_FWD" onclick="selectButton('A_FWD')">
                         <span class="sub-desc" id="desc-A_FWD"></span>
@@ -360,13 +374,10 @@
                     </button>
                 </div>
                 
-                <!-- 水平滾輪 B：左右按鈕分割，上下文字顯示（上:左 / 下:右） -->
                 <div class="box encoder-box horizontal" id="box-B">
-                    <!-- 左右感應按鈕 -->
                     <button type="button" class="encoder-sub-btn left" id="btn-B_L" onclick="selectButton('B_L')"></button>
                     <button type="button" class="encoder-sub-btn right" id="btn-B_R" onclick="selectButton('B_R')"></button>
                     
-                    <!-- 上下文字顯示區與中央標題 -->
                     <span class="encoder-text-top sub-desc" id="desc-B_L" onclick="selectButton('B_L')"
                           onmouseenter="syncHover('btn-B_L', true)" onmouseleave="syncHover('btn-B_L', false)"
                           onmousedown="syncActive('btn-B_L', true)" onmouseup="syncActive('btn-B_L', false)"></span>
@@ -378,7 +389,6 @@
             </div>
         </div>
 
-        <!-- 快捷鍵設定面板 -->
         <div class="config-panel">
             <div class="key-input-wrapper">
                 <div id="key-input-area" class="key-input-area">
@@ -392,8 +402,34 @@
                 </div>
             </div>
         </div>
-        
-        <!-- 系統控制 -->
+
+        <!-- 旋鈕監控區塊 -->
+        <div class="encoder-monitor">
+            <div class="monitor-header">
+                <span class="monitor-title">QDEC 編碼器監控</span>
+                <button class="clear-log-btn" onclick="clearTerminal()">清空記錄</button>
+            </div>
+            
+            <div class="monitor-stats-grid">
+                <div class="stat-card">
+                    <span class="stat-name">即時轉向</span>
+                    <span class="stat-value" id="enc-dir-val">⚪ 靜止</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-name">撲滿度數</span>
+                    <span class="stat-value" id="enc-deg-val">0°</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-name">累計格數</span>
+                    <span class="stat-value" id="enc-total-val">0 格</span>
+                </div>
+            </div>
+
+            <div class="terminal-container" id="encoder-terminal">
+                <div class="terminal-log-entry" style="color: #666;">系統監聽中...請轉動硬體滾輪以接收信號</div>
+            </div>
+        </div>
+
         <div class="led-controls">
             <button class="sys-btn on-btn" onclick="sendReq('/led/on')">打開綠燈</button>
             <button class="sys-btn off-btn" onclick="sendReq('/led/off')">關閉綠燈</button>
@@ -402,14 +438,11 @@
         
         <div class="footer">
             <div>© <span class="custom-font">ORESANJO</span> / <span class="custom-font">SHUNNN</span></div>
-            <div style="color: #666; font-size: 12px; margin-top: 5px;">2026090613</div>
+            <div style="color: #666; font-size: 12px; margin-top: 5px;">20260909 V_ROCK_SOLID</div>
         </div>
     </div>
 
     <script>
-        // ==========================================
-        // 16-bit HID 編解碼器字典
-        // ==========================================
         const MOD_MAP = {
             'CONTROL': 0x01, 'LEFT CONTROL': 0x01, 'RIGHT CONTROL': 0x01,
             'SHIFT': 0x02, 'LEFT SHIFT': 0x02, 'RIGHT SHIFT': 0x02,
@@ -434,12 +467,10 @@
             'ARROW RIGHT': 0x4F, 'ARROW LEFT': 0x50, 'ARROW DOWN': 0x51, 'ARROW UP': 0x52
         };
 
-        // 反向查表（用於開機讀取時還原文字）
         const HID_TO_KEY = {};
         for (let k in KEY_TO_HID) HID_TO_KEY[KEY_TO_HID[k]] = k;
 
-		// 多鍵編碼：將修飾鍵放 Byte 1，普通鍵依序填入 Byte 0, 2, 3
-		function encodeKeys(keyArray) {
+        function encodeKeys(keyArray) {
             let mod = 0;
             let normalKey = 0;
             for (let k of keyArray) {
@@ -468,15 +499,81 @@
         }
 
         // ==========================================
-        // 名稱與頻道獲取邏輯
+        // 全域通訊鎖 (避免 TCP 阻塞當機)
         // ==========================================
+        let isTransmitting = false; 
+
         let currentChannels = ["Win", "Mac", "iPad"];
         let currentProfiles = ["PF 1", "PF 2", "PF 3"];
 
-        window.onload = function() {
-            fetch('/api/channels')
-                .then(response => response.json())
-                .then(data => {
+		// ==========================================
+        // 循序載入存檔流程 (完全就緒後才啟動輪詢)
+        // ==========================================
+        async function onProfileChange() {
+            const ch = document.getElementById('channelSelect').value;
+            const pf = document.getElementById('profileSelect').value;
+            if (ch === "" || pf === "") return;
+            const pName = currentProfiles[pf] || `預設配置 ${parseInt(pf) + 1}`;
+            document.getElementById('profileNameDisplay').textContent = pName;
+
+            isTransmitting = true;
+            try {
+                const response = await fetch(`/api/keys?ch=${ch}&pf=${pf}`);
+                if (!response.ok) throw new Error("Keys API Error");
+                const keysData = await response.json();
+                for (let id in keysData) {
+                    const descEl = document.getElementById(`desc-${id}`);
+                    if (descEl) {
+                        const readable = decodeCode(keysData[id]);
+                        renderButtonLabel(id, readable);
+                    }
+                }
+            } catch (err) {
+                console.log('讀取按鍵配置失敗', err);
+            } finally {
+                isTransmitting = false;
+            }
+        }
+
+        async function onChannelChange() {
+            const ch = document.getElementById('channelSelect').value;
+            if (ch === "") return;
+            const cName = currentChannels[ch] || "None";
+            document.getElementById('channelNameDisplay').textContent = cName;
+
+            isTransmitting = true;
+            try {
+                const response = await fetch(`/api/profiles?ch=${ch}`);
+                if (!response.ok) throw new Error("Profiles API Error");
+                currentProfiles = await response.json();
+                // 嚴格等待按鍵設定載入完成
+                await onProfileChange();
+            } catch (err) {
+                console.log('讀取配置檔失敗', err);
+            } finally {
+                isTransmitting = false;
+            }
+        }
+
+		window.onload = async function() {
+            // 1. 確保定時器清空，並在載入期間鎖定通訊
+            if (encoderPollTimer) {
+                clearTimeout(encoderPollTimer);
+                encoderPollTimer = null;
+            }
+            isTransmitting = true;
+
+            // 關鍵防護 1：給 Windows USB 虛擬網卡 800ms 的時間穩定路由，避免 ERR_NETWORK_CHANGED
+            await new Promise(resolve => setTimeout(resolve, 800));
+
+            let retryCount = 3; // 關鍵防護 2：允許失敗重試 3 次
+            while (retryCount > 0) {
+                try {
+                    // 加入 t= 時間戳避免瀏覽器快取舊的失敗回應
+                    const response = await fetch(`/api/channels?t=${Date.now()}`, { cache: 'no-store' });
+                    if (!response.ok) throw new Error("Channels API Error");
+                    const data = await response.json();
+                    
                     const selectElement = document.getElementById('channelSelect');
                     selectElement.innerHTML = ''; 
                     currentChannels = data;
@@ -487,50 +584,30 @@
                         option.textContent = `CH ${index + 1} - ${displayName}`;
                         selectElement.appendChild(option);
                     });
-                    onChannelChange();
-                })
-                .catch(err => {
-                    console.log('讀取頻道資料失敗', err);
-                    document.getElementById('channelSelect').innerHTML = '<option value="">讀取失敗</option>';
-                });
-        };
 
-        function onChannelChange() {
-            const ch = document.getElementById('channelSelect').value;
-            if (ch === "") return;
-            const cName = currentChannels[ch] || "None";
-            document.getElementById('channelNameDisplay').textContent = cName;
+                    // 依序等待 Profile 與按鍵映射全部載入並渲染
+                    await onChannelChange();
+                    break; // 成功讀取，跳出重試迴圈
 
-            fetch(`/api/profiles?ch=${ch}`)
-                .then(response => response.json())
-                .then(data => {
-                    currentProfiles = data;
-                    onProfileChange();
-                })
-                .catch(err => console.log('讀取配置檔失敗', err));
-        }
-
-        function onProfileChange() {
-            const ch = document.getElementById('channelSelect').value;
-            const pf = document.getElementById('profileSelect').value;
-			if (ch === "" || pf === "") return;
-            const pName = currentProfiles[pf] || `預設配置 ${parseInt(pf) + 1}`;
-            document.getElementById('profileNameDisplay').textContent = pName;
-
-            // 切換 Profile 時向板子請求當前的按鍵設定，並更新到畫面上
-            fetch(`/api/keys?ch=${ch}&pf=${pf}`)
-                .then(response => response.json())
-                .then(keysData => {
-                    for (let id in keysData) {
-                        const descEl = document.getElementById(`desc-${id}`);
-                        if (descEl) {
-                            const readable = decodeCode(keysData[id]);
-                            renderButtonLabel(id, readable);
-                        }
+                } catch (err) {
+                    retryCount--;
+                    console.log(`讀取存檔失敗，剩餘重試次數: ${retryCount}`, err);
+                    if (retryCount === 0) {
+                        document.getElementById('channelSelect').innerHTML = '<option value="">讀取失敗</option>';
+                    } else {
+                        // 失敗的話等 1 秒再試一次
+                        await new Promise(resolve => setTimeout(resolve, 1000));
                     }
-                })
-                .catch(err => console.log('讀取按鍵配置失敗', err));
-        }
+                }
+            }
+
+            // 給予單晶片 200ms 的緩衝期，徹底釋放 initialization 期間的 Socket
+            await new Promise(resolve => setTimeout(resolve, 200));
+            isTransmitting = false;
+
+            // 極速啟動：改為 50ms 
+            encoderPollTimer = setTimeout(pollEncoderData, 50); 
+        };
 
         function renderButtonLabel(id, text) {
             const el = document.getElementById(`desc-${id}`);
@@ -570,6 +647,7 @@
                 const newPName = pInput.value.trim() || "None";
                 const url = `/api/rename?ch=${ch}&pf=${pf}&cname=${encodeURIComponent(newCName)}&pname=${encodeURIComponent(newPName)}`;
                 
+                isTransmitting = true;
                 fetch(url).then(response => {
                     if (!response.ok) throw new Error("API Error");
                     currentChannels[ch] = newCName; currentProfiles[pf] = newPName;
@@ -578,8 +656,89 @@
                     inputContainer.style.display = 'none'; displayContainer.style.display = 'flex';
                     btn.textContent = '更名'; btn.style.backgroundColor = '#4CAF50';
                     isEditingName = false;
-                }).catch(err => alert("更名失敗，請確認連線！"));
+                }).catch(err => alert("更名失敗，請確認連線！"))
+                .finally(() => { isTransmitting = false; });
             }
+        }
+
+        // ==========================================
+        // 編碼器資料輪詢與即時呈現 (徹底降頻穩定版)
+        // ==========================================
+        let lastEncSeq = 0;
+        let lastEncTotal = 0;
+        let dirResetTimer = null;
+		let encoderPollTimer = null;
+
+        function pollEncoderData() {
+            if (encoderPollTimer) {
+                clearTimeout(encoderPollTimer);
+                encoderPollTimer = null;
+            }
+
+            // 當正在發送資料、更名或按下 SET 儲存設定時，暫停本次輪詢
+            if (isTransmitting || isEditingName || isSettingShortcut) {
+                encoderPollTimer = setTimeout(pollEncoderData, 25);
+                return;
+            }
+
+            isTransmitting = true;
+
+            fetch(`/api/encoder?t=${Date.now()}`, { cache: 'no-store' })
+                .then(res => {
+                    if (!res.ok) throw new Error();
+                    return res.json();
+                })
+                .then(data => {
+                    document.getElementById('enc-deg-val').textContent = `${data.deg}°`;
+                    document.getElementById('enc-total-val').textContent = `${data.total} 格`;
+
+                    if (data.seq !== lastEncSeq) {
+                        const deltaClicks = data.total - lastEncTotal;
+                        const dirEl = document.getElementById('enc-dir-val');
+                        
+                        let dirText = (deltaClicks > 0) ? '➡️ 右轉' : '⬅️ 左轉';
+                        let dirClass = (deltaClicks > 0) ? 'log-dir-r' : 'log-dir-l';
+
+                        dirEl.textContent = dirText;
+                        dirEl.classList.add('active-dir');
+
+                        clearTimeout(dirResetTimer);
+                        dirResetTimer = setTimeout(() => {
+                            dirEl.textContent = '⚪ 靜止';
+                            dirEl.classList.remove('active-dir');
+                        }, 250);
+
+                        appendTerminalLog(dirText, Math.abs(deltaClicks), data.total, dirClass);
+
+                        lastEncSeq = data.seq;
+                        lastEncTotal = data.total;
+                    }
+                })
+                .catch(() => {})
+                .finally(() => {
+                    isTransmitting = false;
+                    // 若未處於按鍵儲存流程，排程 400ms 後發起下一輪
+                    if (!isSettingShortcut) {
+                        encoderPollTimer = setTimeout(pollEncoderData, 25);
+                    }
+                });
+        }
+
+        function appendTerminalLog(dirText, clicks, total, dirClass) {
+            const terminal = document.getElementById('encoder-terminal');
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0];
+
+            const entry = document.createElement('div');
+            entry.className = 'terminal-log-entry';
+            entry.innerHTML = `<span class="log-time">[${timeStr}]</span> <span class="${dirClass}">${dirText} ${clicks} 格</span> (累計: ${total})`;
+
+            terminal.appendChild(entry);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function clearTerminal() {
+            document.getElementById('encoder-terminal').innerHTML = '<div class="terminal-log-entry" style="color: #666;">記錄已清空...</div>';
         }
 
         // ==========================================
@@ -615,11 +774,12 @@
             updateKeyDisplay();
         }
 
-        // 點擊「清空」按鈕：將代碼 0 (清空) 送往板子並寫入 NVS
         function clearSelectedShortcut() {
             if (!selectedButtonId) return;
             const ch = document.getElementById('channelSelect').value;
             const pf = document.getElementById('profileSelect').value;
+
+            isTransmitting = true;
 
             fetch(`/api/setkey?ch=${ch}&pf=${pf}&id=${selectedButtonId}&code=0`)
                 .then(res => {
@@ -630,7 +790,8 @@
                     keyInputArea.classList.remove('active');
                     updateKeyDisplay();
                 })
-                .catch(() => alert("清空設定失敗，請確認連線！"));
+                .catch(() => alert("清空設定失敗，請確認連線！"))
+                .finally(() => { isTransmitting = false; });
         }
 
         function selectButton(btnId) {
@@ -641,7 +802,7 @@
             if (targetEl) targetEl.classList.add('selected');
             
             clearInputBuffer();
-            isKey2Active = true;
+            isKey2Active = true; 
             keyInputArea.classList.add('active');
             updateKeyDisplay();
         }
@@ -657,22 +818,19 @@
         });
 
         document.addEventListener('click', (e) => {
-            if (!keyInputArea.contains(e.target) && !e.target.closest('.box') && !e.target.closest('.encoder-sub-btn') && !e.target.closest('.encoder-text-top') && !e.target.closest('.encoder-text-bottom') && !e.target.closest('.key-controls')) {
-                isKey2Active = false;
+            if (!keyInputArea.contains(e.target) && !e.target.closest('.box') && !e.target.closest('.encoder-sub-btn') && !e.target.closest('.encoder-text-top') && !e.target.closest('.encoder-text-bottom') && !e.target.closest('.key-controls') && !e.target.closest('.name-edit-group')) {
+                isKey2Active = false; 
                 keyInputArea.classList.remove('active');
                 updateKeyDisplay();
             }
         });
 
-		document.addEventListener('keydown', (event) => {
+        document.addEventListener('keydown', (event) => {
             if (!isKey2Active) return;
 
-            // 阻止 F1~F12、Tab、Space 等原生瀏覽器行為搶走焦點或觸發換頁
             event.preventDefault(); 
-
             let key = event.key.toUpperCase();
             
-            // 修正瀏覽器名稱與 HID 字典名稱的空格差異
             if (key === ' ') key = 'SPACE';
             else if (key === 'ARROWUP') key = 'ARROW UP';
             else if (key === 'ARROWDOWN') key = 'ARROW DOWN';
@@ -685,17 +843,13 @@
 
             if (!allowedKeys.has(key)) return;
 
-            // 情況 1：按下的是修飾鍵 (Ctrl / Shift / Alt / Win) -> 允許疊加
             if (MOD_MAP[key]) {
                 if (!key2Array.includes(key)) {
                     key2Array.push(key);
                 }
             } 
-            // 情況 2：按下的是普通功能鍵 -> 自動剔除舊的普通鍵，替換為最新按下的鍵
             else if (KEY_TO_HID[key]) {
-                // 濾除原本陣列中所有的非修飾鍵，只保留修飾鍵
                 key2Array = key2Array.filter(k => MOD_MAP[k]);
-                // 放入新的普通按鍵
                 key2Array.push(key);
             }
 
@@ -728,27 +882,61 @@
             updateKeyDisplay();
         }
 
-        // 點擊「儲存設定 (SET)」：將組合鍵轉為 16-bit 碼送往板子並寫入 NVS
-        function setShortcut() {
+		let isSettingShortcut = false;
+
+        async function setShortcut() {
             if (!selectedButtonId) {
                 alert("請先在上方點擊選擇一個目標按鈕！");
                 return;
             }
 
+            const setBtn = document.querySelector('.set-btn');
+            if (setBtn) setBtn.disabled = true;
+
+            // 1. 立即中斷排隊中的輪詢定時器
+            if (encoderPollTimer) {
+                clearTimeout(encoderPollTimer);
+                encoderPollTimer = null;
+            }
+
+            // 2. 標記進入按鍵設定狀態，阻止輪詢重新發起
+            isSettingShortcut = true;
+
+            // 3. 若剛好有輪詢請求在傳輸中，等待它完成 (最多等 1 秒避免異常卡死)
+            let waitCount = 0;
+            while (isTransmitting && waitCount < 10) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                waitCount++;
+            }
+
+            // 4. 正式發送設定請求
+            isTransmitting = true;
             const code = encodeKeys(key2Array);
             const ch = document.getElementById('channelSelect').value;
             const pf = document.getElementById('profileSelect').value;
+            const safeId = encodeURIComponent(selectedButtonId);
 
-            fetch(`/api/setkey?ch=${ch}&pf=${pf}&id=${selectedButtonId}&code=${code}`)
-                .then(res => {
-                    if (!res.ok) throw new Error();
-                    const readable = decodeCode(code);
-                    renderButtonLabel(selectedButtonId, readable);
-                    isKey2Active = false;
-                    keyInputArea.classList.remove('active');
-                    updateKeyDisplay();
-                })
-                .catch(() => alert("儲存快捷鍵失敗，請確認與板子的連線！"));
+            try {
+                const res = await fetch(`/api/setkey?ch=${ch}&pf=${pf}&id=${safeId}&code=${code}`);
+                if (!res.ok) throw new Error();
+                const readable = decodeCode(code);
+                renderButtonLabel(selectedButtonId, readable);
+                isKey2Active = false;
+                keyInputArea.classList.remove('active');
+                updateKeyDisplay();
+            } catch (err) {
+                alert("儲存快捷鍵失敗，請確認與板子的連線！");
+            } finally {
+                // 5. 保留 350ms 冷卻緩衝：讓單晶片完成 Flash (NVS) 寫入與 Socket 乾淨關閉
+                await new Promise(resolve => setTimeout(resolve, 350));
+                
+                isTransmitting = false;
+                isSettingShortcut = false;
+                if (setBtn) setBtn.disabled = false;
+
+                // 6. 設定動作完成，無縫重啟輪詢
+                encoderPollTimer = setTimeout(pollEncoderData, 400);
+            }
         }
 
         // ==========================================
@@ -757,11 +945,17 @@
         function sendReq(url) {
             let btns = document.querySelectorAll('.sys-btn');
             btns.forEach(b => b.disabled = true);
-            fetch(url).catch(err => console.log('設備忙碌'))
-                .finally(() => setTimeout(() => btns.forEach(b => b.disabled = false), 100));
+            isTransmitting = true;
+            fetch(url)
+                .catch(err => console.log('設備忙碌'))
+                .finally(() => {
+                    setTimeout(() => btns.forEach(b => b.disabled = false), 100);
+                    isTransmitting = false;
+                });
         }
 
         function closeWindow() {
+            isTransmitting = true;
             fetch('/exit', { keepalive: true }).catch(err => console.log('發送失敗'))
                 .finally(() => {
                     window.open('', '_self').close();

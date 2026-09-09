@@ -244,7 +244,7 @@
 			interrupts = < 0x6 0x5 >;         /* in zephyr\dts\arm\nordic\nrf52840.dtsi:228 */
 			instance = < 0x0 >;               /* in zephyr\dts\arm\nordic\nrf52840.dtsi:230 */
 			status = "okay";                  /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:73 */
-			phandle = < 0xc >;                /* in zephyr\dts\arm\nordic\nrf52840.dtsi:572 */
+			phandle = < 0xd >;                /* in zephyr\dts\arm\nordic\nrf52840.dtsi:572 */
 		};
 
 		/* node '/soc/adc@40007000' defined in zephyr\dts\arm\nordic\nrf52840.dtsi:233 */
@@ -277,7 +277,7 @@
 			max-bit-width = < 0x20 >;        /* in zephyr\dts\arm\nordic\nrf52840.dtsi:257 */
 			interrupts = < 0x9 0x1 >;        /* in zephyr\dts\arm\nordic\nrf52840.dtsi:258 */
 			prescaler = < 0x0 >;             /* in zephyr\dts\arm\nordic\nrf52840.dtsi:259 */
-			phandle = < 0xd >;               /* in zephyr\dts\vendor\nordic\nrf_common.dtsi:42 */
+			phandle = < 0xe >;               /* in zephyr\dts\vendor\nordic\nrf_common.dtsi:42 */
 		};
 
 		/* node '/soc/timer@4000a000' defined in zephyr\dts\arm\nordic\nrf52840.dtsi:262 */
@@ -359,7 +359,11 @@
 			compatible = "nordic,nrf-qdec"; /* in zephyr\dts\arm\nordic\nrf52840.dtsi:329 */
 			reg = < 0x40012000 0x1000 >;    /* in zephyr\dts\arm\nordic\nrf52840.dtsi:330 */
 			interrupts = < 0x12 0x1 >;      /* in zephyr\dts\arm\nordic\nrf52840.dtsi:331 */
-			status = "disabled";            /* in zephyr\dts\arm\nordic\nrf52840.dtsi:332 */
+			status = "okay";                /* in ..\..\projects\PMP_MAIN\app.overlay:44 */
+			pinctrl-0 = < &qdec_default >;  /* in ..\..\projects\PMP_MAIN\app.overlay:45 */
+			pinctrl-names = "default";      /* in ..\..\projects\PMP_MAIN\app.overlay:46 */
+			steps = < 0x18 >;               /* in ..\..\projects\PMP_MAIN\app.overlay:47 */
+			led-pre = < 0x0 >;              /* in ..\..\projects\PMP_MAIN\app.overlay:48 */
 		};
 
 		/* node '/soc/comparator@40013000' defined in zephyr\dts\arm\nordic\nrf52840.dtsi:335 */
@@ -457,7 +461,7 @@
 			pinctrl-1 = < &pwm0_sleep >;   /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:105 */
 			pinctrl-names = "default",
 			                "sleep";       /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:106 */
-			phandle = < 0x10 >;            /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:41 */
+			phandle = < 0x11 >;            /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:41 */
 		};
 
 		/* node '/soc/pdm@4001d000' defined in zephyr\dts\arm\nordic\nrf52840.dtsi:416 */
@@ -609,19 +613,19 @@
 			num-isoin-endpoints = < 0x1 >;  /* in zephyr\dts\arm\nordic\nrf52840.dtsi:521 */
 			num-isoout-endpoints = < 0x1 >; /* in zephyr\dts\arm\nordic\nrf52840.dtsi:522 */
 			compatible = "nordic,nrf-usbd"; /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:144 */
-			status = "okay";                /* in ..\..\projects\PMP_MAIN\app.overlay:31 */
+			status = "okay";                /* in ..\..\projects\PMP_MAIN\app.overlay:53 */
 
 			/* node '/soc/usbd@40027000/board_cdc_acm_uart' defined in zephyr\boards\common\usb\cdc_acm_serial.dtsi:18 */
 			board_cdc_acm_uart: board_cdc_acm_uart {
 				compatible = "zephyr,cdc-acm-uart"; /* in zephyr\boards\common\usb\cdc_acm_serial.dtsi:19 */
 			};
 
-			/* node '/soc/usbd@40027000/cdc_ncm_0' defined in ..\..\projects\PMP_MAIN\app.overlay:32 */
+			/* node '/soc/usbd@40027000/cdc_ncm_0' defined in ..\..\projects\PMP_MAIN\app.overlay:54 */
 			cdc_ncm_0: cdc_ncm_0 {
-				compatible = "zephyr,cdc-ncm-ethernet"; /* in ..\..\projects\PMP_MAIN\app.overlay:33 */
-				zephyr,random-mac-address;              /* in ..\..\projects\PMP_MAIN\app.overlay:34 */
-				remote-mac-address = "02badc0ffee0";    /* in ..\..\projects\PMP_MAIN\app.overlay:37 */
-				status = "okay";                        /* in ..\..\projects\PMP_MAIN\app.overlay:39 */
+				compatible = "zephyr,cdc-ncm-ethernet"; /* in ..\..\projects\PMP_MAIN\app.overlay:55 */
+				zephyr,random-mac-address;              /* in ..\..\projects\PMP_MAIN\app.overlay:56 */
+				remote-mac-address = "02badc0ffee0";    /* in ..\..\projects\PMP_MAIN\app.overlay:59 */
+				status = "okay";                        /* in ..\..\projects\PMP_MAIN\app.overlay:61 */
 			};
 		};
 
@@ -697,7 +701,7 @@
 			port = < 0x0 >;                              /* in zephyr\dts\arm\nordic\nrf52840.dtsi:571 */
 			gpiote-instance = < &gpiote >;               /* in zephyr\dts\arm\nordic\nrf52840.dtsi:572 */
 			status = "okay";                             /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:77 */
-			phandle = < 0xe >;                           /* in zephyr\boards\seeed\xiao_ble\seeed_xiao_connector.dtsi:14 */
+			phandle = < 0xf >;                           /* in zephyr\boards\seeed\xiao_ble\seeed_xiao_connector.dtsi:14 */
 		};
 
 		/* node '/soc/gpio@50000300' defined in zephyr\dts\arm\nordic\nrf52840.dtsi:575 */
@@ -710,7 +714,7 @@
 			port = < 0x1 >;                              /* in zephyr\dts\arm\nordic\nrf52840.dtsi:583 */
 			gpiote-instance = < &gpiote >;               /* in zephyr\dts\arm\nordic\nrf52840.dtsi:584 */
 			status = "okay";                             /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:81 */
-			phandle = < 0xf >;                           /* in zephyr\boards\seeed\xiao_ble\seeed_xiao_connector.dtsi:14 */
+			phandle = < 0x10 >;                          /* in zephyr\boards\seeed\xiao_ble\seeed_xiao_connector.dtsi:14 */
 		};
 
 		/* node '/soc/crypto@5002a000' defined in zephyr\dts\arm\nordic\nrf52840.dtsi:587 */
@@ -824,7 +828,7 @@
 
 		/* node '/pin-controller/pwm0_default' defined in zephyr\boards\seeed\xiao_ble\xiao_ble-pinctrl.dtsi:71 */
 		pwm0_default: pwm0_default {
-			phandle = < 0x6 >; /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:104 */
+			phandle = < 0x7 >; /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:104 */
 
 			/* node '/pin-controller/pwm0_default/group1' defined in zephyr\boards\seeed\xiao_ble\xiao_ble-pinctrl.dtsi:72 */
 			group1 {
@@ -835,7 +839,7 @@
 
 		/* node '/pin-controller/pwm0_sleep' defined in zephyr\boards\seeed\xiao_ble\xiao_ble-pinctrl.dtsi:78 */
 		pwm0_sleep: pwm0_sleep {
-			phandle = < 0x7 >; /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:105 */
+			phandle = < 0x8 >; /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:105 */
 
 			/* node '/pin-controller/pwm0_sleep/group1' defined in zephyr\boards\seeed\xiao_ble\xiao_ble-pinctrl.dtsi:79 */
 			group1 {
@@ -846,7 +850,7 @@
 
 		/* node '/pin-controller/spi2_default' defined in zephyr\boards\seeed\xiao_ble\xiao_ble-pinctrl.dtsi:85 */
 		spi2_default: spi2_default {
-			phandle = < 0x8 >; /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:112 */
+			phandle = < 0x9 >; /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:112 */
 
 			/* node '/pin-controller/spi2_default/group1' defined in zephyr\boards\seeed\xiao_ble\xiao_ble-pinctrl.dtsi:86 */
 			group1 {
@@ -858,7 +862,7 @@
 
 		/* node '/pin-controller/spi2_sleep' defined in zephyr\boards\seeed\xiao_ble\xiao_ble-pinctrl.dtsi:93 */
 		spi2_sleep: spi2_sleep {
-			phandle = < 0x9 >; /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:113 */
+			phandle = < 0xa >; /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:113 */
 
 			/* node '/pin-controller/spi2_sleep/group1' defined in zephyr\boards\seeed\xiao_ble\xiao_ble-pinctrl.dtsi:94 */
 			group1 {
@@ -894,7 +898,7 @@
 
 		/* node '/pin-controller/qspi_default' defined in zephyr\boards\seeed\xiao_ble\xiao_ble-pinctrl.dtsi:119 */
 		qspi_default: qspi_default {
-			phandle = < 0xa >; /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:119 */
+			phandle = < 0xb >; /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:119 */
 
 			/* node '/pin-controller/qspi_default/group1' defined in zephyr\boards\seeed\xiao_ble\xiao_ble-pinctrl.dtsi:120 */
 			group1 {
@@ -909,7 +913,7 @@
 
 		/* node '/pin-controller/qspi_sleep' defined in zephyr\boards\seeed\xiao_ble\xiao_ble-pinctrl.dtsi:130 */
 		qspi_sleep: qspi_sleep {
-			phandle = < 0xb >; /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:120 */
+			phandle = < 0xc >; /* in zephyr\boards\seeed\xiao_ble\xiao_ble_common.dtsi:120 */
 
 			/* node '/pin-controller/qspi_sleep/group1' defined in zephyr\boards\seeed\xiao_ble\xiao_ble-pinctrl.dtsi:131 */
 			group1 {
@@ -926,6 +930,18 @@
 				psels = < 0x1e000019 >; /* in zephyr\boards\seeed\xiao_ble\xiao_ble-pinctrl.dtsi:141 */
 				low-power-enable;       /* in zephyr\boards\seeed\xiao_ble\xiao_ble-pinctrl.dtsi:142 */
 				bias-pull-up;           /* in zephyr\boards\seeed\xiao_ble\xiao_ble-pinctrl.dtsi:143 */
+			};
+		};
+
+		/* node '/pin-controller/qdec_default' defined in ..\..\projects\PMP_MAIN\app.overlay:33 */
+		qdec_default: qdec_default {
+			phandle = < 0x6 >; /* in ..\..\projects\PMP_MAIN\app.overlay:45 */
+
+			/* node '/pin-controller/qdec_default/group1' defined in ..\..\projects\PMP_MAIN\app.overlay:34 */
+			group1 {
+				psels = < 0x1a000002 >,
+				        < 0x1b000003 >; /* in ..\..\projects\PMP_MAIN\app.overlay:35 */
+				bias-pull-up;           /* in ..\..\projects\PMP_MAIN\app.overlay:37 */
 			};
 		};
 	};
@@ -1037,7 +1053,7 @@
 
 		/* node '/buttons/button_0' defined in ..\..\projects\PMP_MAIN\app.overlay:11 */
 		switch_btn: button_0 {
-			gpios = < &gpio0 0x3 0x11 >;     /* in ..\..\projects\PMP_MAIN\app.overlay:12 */
+			gpios = < &gpio0 0x4 0x11 >;     /* in ..\..\projects\PMP_MAIN\app.overlay:12 */
 			label = "Channel Switch Button"; /* in ..\..\projects\PMP_MAIN\app.overlay:13 */
 		};
 

@@ -1168,7 +1168,7 @@ zephyr_udc0: &usbd {
 
 
         switch_btn: button_0 {
-            gpios = <&gpio0 3 ((1 << 4) | (1 << 0))>;
+            gpios = <&gpio0 4 ((1 << 4) | (1 << 0))>;
             label = "Channel Switch Button";
         };
 
@@ -1185,6 +1185,28 @@ zephyr_udc0: &usbd {
         };
     };
 };
+
+
+&pinctrl {
+
+    qdec_default: qdec_default {
+        group1 {
+            psels = <((((((0) * 32U) + (2)) & 0x1FFU) << 0U) | ((26U & 0xFFU) << 24U))>,
+                    <((((((0) * 32U) + (3)) & 0x1FFU) << 0U) | ((27U & 0xFFU) << 24U))>;
+            bias-pull-up;
+        };
+    };
+};
+
+
+&qdec {
+    status = "okay";
+    pinctrl-0 = <&qdec_default>;
+    pinctrl-names = "default";
+    steps = <24>;
+    led-pre = <0>;
+};
+
 
 &zephyr_udc0 {
     status = "okay";

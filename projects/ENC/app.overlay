@@ -1,5 +1,6 @@
 #include <zephyr/dt-bindings/led/led.h>
 #include <zephyr/dt-bindings/input/input-event-codes.h>
+
 /* ==========================================
  * 1. 系統預設與虛擬節點設定 (Root Node)
  * ========================================== */
@@ -16,9 +17,9 @@
         gpios = <&gpio0 28 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>,
                 <&gpio0 29 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
         steps-per-period = <4>;
-		zephyr,axis = <INPUT_REL_WHEEL>;
-		sample-time-us = <2000>;
-		idle-timeout-ms = <250>;
+        zephyr,axis = <INPUT_REL_WHEEL>;
+        sample-time-us = <2000>;
+        idle-timeout-ms = <250>;
     };
 
     /* --- 獨立按鍵 (編碼器下壓 x2, 設定按鍵 x2) --- */
@@ -46,7 +47,7 @@
     kscan0: kscan0 {
         compatible = "zephyr,kscan-gpio-matrix";
         label = "MATRIX_KEYPAD";
-        diode-direction = "col2row"; /* 假設掃描方向為行掃列，視你未來二極體的銲接方向而定 */
+        diode-direction = "col2row";
         
         /* 行 (Row): D11(P0.15), D12(P0.19), D13(P1.01) - 位於背面銲盤 */
         row-gpios = <&gpio0 15 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>,
@@ -73,11 +74,11 @@
 
 /* 定義硬體腳位功能 (Pinctrl) */
 &pinctrl {
-    /* 編碼器 1 (大旋鈕, D0 & D1) */
+    /* 編碼器 1 (大旋鈕，硬體 QDEC，使用 D0 & D1) */
     qdec_default: qdec_default {
         group1 {
-            psels = <NRF_PSEL(QDEC_A, 0, 2)>,
-                    <NRF_PSEL(QDEC_B, 0, 3)>;
+            psels = <NRF_PSEL(QDEC_A, 0, 2)>,  /* D0 = P0.02 */
+                    <NRF_PSEL(QDEC_B, 0, 3)>;  /* D1 = P0.03 */
             bias-pull-up;
         };
     };
@@ -111,7 +112,7 @@
         compatible = "worldsemi,ws2812-spi";
         reg = <0>;
         spi-max-frequency = <4000000>;
-        chain-length = <6>; /* 對應你的設計圖：總共 6 顆指示燈 */
+        chain-length = <6>; /* 對應設計圖：總共 6 顆指示燈 */
         spi-one-frame = <0x70>;
         spi-zero-frame = <0x40>;
         color-mapping = <LED_COLOR_ID_GREEN

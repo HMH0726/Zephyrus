@@ -242,6 +242,17 @@
     ]
   ],
   [
+    "CONFIG_DT_HAS_NORDIC_NRF_QDEC_ENABLED",
+    "n",
+    "bool",
+    "y",
+    "default",
+    [
+      "D:/Users/ORESANJO/Downloads/Zephyrus/projects/PMP_MAIN/build/Kconfig/Kconfig.dts",
+      6503
+    ]
+  ],
+  [
     "CONFIG_DT_HAS_NORDIC_NRF_QSPI_ENABLED",
     "n",
     "bool",
@@ -2283,9 +2294,11 @@
     "CONFIG_NRFX_QDEC",
     "y",
     "bool",
-    null,
-    "unset",
-    null
+    "y",
+    "select",
+    [
+      "QDEC_NRFX && DT_HAS_NORDIC_NRF_QDEC_ENABLED && SENSOR"
+    ]
   ],
   [
     "CONFIG_NRFX_QSPI",
@@ -8247,6 +8260,7 @@
     "select",
     [
       "NORDIC_QSPI_NOR && DT_HAS_NORDIC_QSPI_NOR_ENABLED && FLASH",
+      "QDEC_NRFX && DT_HAS_NORDIC_NRF_QDEC_ENABLED && SENSOR",
       "UART_NRFX && (DT_HAS_NORDIC_NRF_UART_ENABLED || DT_HAS_NORDIC_NRF_UARTE_ENABLED) && SERIAL"
     ]
   ],
@@ -8363,9 +8377,83 @@
     "CONFIG_SENSOR",
     "y",
     "bool",
+    "y",
+    "assign",
+    [
+      "D:/Users/ORESANJO/Downloads/Zephyrus/projects/PMP_MAIN/prj.conf",
+      119
+    ]
+  ],
+  [
+    "CONFIG_SENSOR_INIT_PRIORITY",
+    "y",
+    "int",
+    "90",
+    "default",
+    [
+      "D:\\Users\\ORESANJO\\Downloads\\Zephyrus\\workspace\\zephyrproject\\zephyr\\drivers\\sensor\\Kconfig",
+      20
+    ]
+  ],
+  [
+    "CONFIG_SENSOR_ASYNC_API",
+    "y",
+    "bool",
     null,
     "unset",
     null
+  ],
+  [
+    "CONFIG_SENSOR_INFO",
+    "y",
+    "bool",
+    null,
+    "unset",
+    null
+  ],
+  [
+    "CONFIG_ADE7978_SHUNT_RESISTOR",
+    "y",
+    "int",
+    "200",
+    "default",
+    [
+      "D:\\Users\\ORESANJO\\Downloads\\Zephyrus\\workspace\\zephyrproject\\zephyr\\drivers\\sensor\\adi\\ade7978\\Kconfig",
+      15
+    ]
+  ],
+  [
+    "CONFIG_ADE7978_VOLTAGE_DIVIDER",
+    "y",
+    "int",
+    "1131",
+    "default",
+    [
+      "D:\\Users\\ORESANJO\\Downloads\\Zephyrus\\workspace\\zephyrproject\\zephyr\\drivers\\sensor\\adi\\ade7978\\Kconfig",
+      21
+    ]
+  ],
+  [
+    "CONFIG_QDEC_NRFX",
+    "y",
+    "bool",
+    "y",
+    "assign",
+    [
+      "D:/Users/ORESANJO/Downloads/Zephyrus/projects/PMP_MAIN/prj.conf",
+      120
+    ]
+  ],
+  [
+    "CONFIG_TEMP_NRF5",
+    "y",
+    "bool",
+    "y",
+    "default",
+    [
+      "D:\\Users\\ORESANJO\\Downloads\\Zephyrus\\workspace\\zephyrproject\\zephyr\\drivers\\sensor\\nordic\\temp\\Kconfig",
+      16
+    ]
   ],
   [
     "CONFIG_SENT",
@@ -13805,7 +13893,7 @@
     "CONFIG_NET_TCP_TIME_WAIT_DELAY",
     "y",
     "int",
-    "250",
+    "200",
     "assign",
     [
       "D:/Users/ORESANJO/Downloads/Zephyrus/projects/PMP_MAIN/prj.conf",
@@ -13994,11 +14082,11 @@
     "CONFIG_NET_MAX_CONN",
     "y",
     "int",
-    "4",
-    "default",
+    "16",
+    "assign",
     [
-      "D:\\Users\\ORESANJO\\Downloads\\Zephyrus\\workspace\\zephyrproject\\zephyr\\subsys\\net\\ip\\Kconfig",
-      523
+      "D:/Users/ORESANJO/Downloads/Zephyrus/projects/PMP_MAIN/prj.conf",
+      125
     ]
   ],
   [

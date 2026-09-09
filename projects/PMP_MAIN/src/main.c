@@ -24,193 +24,99 @@
 // 5. USB
 #include <zephyr/usb/usbd.h>
 #include <zephyr/usb/usb_ch9.h>
-// 6. 硬體驅動與 HAL (Drivers & Hardware Abstraction Layer)
+// 6. 硬體驅動與 HAL
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/flash.h>
+#include <zephyr/drivers/sensor.h>
 #include <hal/nrf_ficr.h>
 
 /* =========================================================
  * 【全域設定與硬體定義區塊】
  * ========================================================= */
-#define ENABLE_CAPTIVE_PORTAL 0	// 模式切換：0 為一般穩定網卡模式，1 為強制彈窗 (Captive Portal) 模式
+#define ENABLE_CAPTIVE_PORTAL 0
 
-#define CH_COUNT           3   // 藍牙設備的頻道總數 (支援 3 個裝置切換)
+#define CH_COUNT           3   
 #define PROFILE_COUNT      3   
 #define KEY_COUNT          9   
-#define WHEEL_DIR          2   // 每個滾輪有 2 個轉動方向 (索引 0:正轉, 索引 1:反轉)
-#define MAX_CH_NAME_LEN    8   // 頻道名稱最大長度
-#define MAX_PROF_NAME_LEN  8   // 配置檔名稱最大長度
+#define WHEEL_DIR          2   
+#define MAX_CH_NAME_LEN    8   
+#define MAX_PROF_NAME_LEN  8   
 
-/* 定義 LED 腳位，從 Device Tree (DT) 中取得別名 (led0, led1, led2) */
+#define ENCODER_STEPS DT_PROP(DT_NODELABEL(qdec), steps)
+#define EDGES_PER_CLICK 4
+#define DEGREES_PER_CLICK ((EDGES_PER_CLICK * 360) / ENCODER_STEPS)
+
+// 編碼器全域統計數據
+static volatile int enc_accumulated_deg = 0;
+static volatile int enc_total_clicks = 0;
+static volatile int enc_last_dir = 0; // 0: 靜止, 1: 右轉, -1: 左轉
+static volatile uint32_t enc_seq = 0;
+
 static const struct gpio_dt_spec led_r = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);
 static const struct gpio_dt_spec led_g = GPIO_DT_SPEC_GET(DT_ALIAS(led1), gpios);
 static const struct gpio_dt_spec led_b = GPIO_DT_SPEC_GET(DT_ALIAS(led2), gpios);
 
-/* 定義按鍵腳位與回呼 (Callback) 結構 */
 static const struct gpio_dt_spec button = GPIO_DT_SPEC_GET(DT_NODELABEL(switch_btn), gpios);
 static struct gpio_callback button_cb_data;
 static const struct gpio_dt_spec clr_button = GPIO_DT_SPEC_GET(DT_NODELABEL(clear_btn), gpios);
 static struct gpio_callback clr_button_cb_data;
-
-/* 新增：編輯模式按鈕 (D7) */
 static const struct gpio_dt_spec editmode_button = GPIO_DT_SPEC_GET(DT_NODELABEL(editmode_btn), gpios);
 static struct gpio_callback editmode_button_cb_data;
 
-// --- 2. 獨立的頻道名稱陣列 ---
-char channel_names[CH_COUNT][MAX_CH_NAME_LEN] = {
-    "Win",   // 頻道 1
-    "Mac",   // 頻道 2
-    "iPad"   // 頻道 3
-};
+char channel_names[CH_COUNT][MAX_CH_NAME_LEN] = { "Win", "Mac", "iPad" };
 
-// --- 3. 定義單一配置檔的資料結構 (加入名稱變數) ---
 typedef struct {
-    char profile_name[MAX_PROF_NAME_LEN]; // 配置檔專屬名稱
+    char profile_name[MAX_PROF_NAME_LEN];
     uint16_t keys[KEY_COUNT];        
-    uint16_t wheel_v[WHEEL_DIR]; // 垂直滾輪 (Vertical):   [0] 向上滾, [1] 向下滾
-    uint16_t wheel_h[WHEEL_DIR]; // 水平滾輪 (Horizontal): [0] 向右滾, [1] 向左滾
+    uint16_t wheel_v[WHEEL_DIR];
+    uint16_t wheel_h[WHEEL_DIR];
 } keyboard_profile_t;
 
-// --- 4. 宣告並初始化 3x3 的二維陣列 ---
 keyboard_profile_t key_profiles[CH_COUNT][PROFILE_COUNT] = {
-    
-    // 【頻道 1】 (索引 0) - Windows 工作站
     {
-        // [配置 0] 日常打字與基本導覽 (依你指定的 3x3 排版)
-        {
-            .profile_name = "Basic",
-            .keys      = { 0x004B, 0x004E, 0x002C, // PageUp, PageDown, Space
-                           0x004A, 0x004D, 0x0028, // Home, End, Enter
-                           0x0052, 0x0051, 0x0029 },// 上, 下, Esc
-            .wheel_v   = { 0x0052, 0x0051 },       // 垂直滾輪: 上, 下
-            .wheel_h   = { 0x004F, 0x0050 }        // 水平滾輪: 右, 左
-        },
-        // [配置 1] 程式開發/文書快捷鍵
-        {
-            .profile_name = "Code",
-            .keys      = { 0x0104, 0x011B, 0x0106, // Ctrl+A, Ctrl+X, Ctrl+C
-                           0x0119, 0x011D, 0x011C, // Ctrl+V, Ctrl+Z, Ctrl+Y
-                           0x0109, 0x0116, 0x0128 },// Ctrl+F, Ctrl+S, Ctrl+Enter
-            .wheel_v   = { 0x0152, 0x0151 },       // 垂直滾輪: Ctrl+上, Ctrl+下 (快速捲動)
-            .wheel_h   = { 0x042B, 0x062B }        // 水平滾輪: Alt+Tab, Alt+Shift+Tab (切換視窗)
-        },
-        // [配置 2] 系統管理員極端組合鍵
-        {
-            .profile_name = "Admin",
-            .keys      = { 0x0329, 0x0A16, 0x094F, // Ctrl+Shift+Esc, Win+Shift+S, Ctrl+Win+右
-                           0x0950, 0x0807, 0x080E, // Ctrl+Win+左, Win+D, Win+K
-                           0x0B05, 0x054C, 0x043D },// Ctrl+Shift+Win+B, Ctrl+Alt+Del, Alt+F4
-            .wheel_v   = { 0x014B, 0x014E },       // 垂直滾輪: Ctrl+PageUp, Ctrl+PageDown
-            .wheel_h   = { 0x0852, 0x0851 }        // 水平滾輪: Win+上(最大化), Win+下(最小化)
-        }
+        { "Basic", { 0x004B, 0x004E, 0x002C, 0x004A, 0x004D, 0x0028, 0x0052, 0x0051, 0x0029 }, { 0x0052, 0x0051 }, { 0x004F, 0x0050 } },
+        { "Code",  { 0x0104, 0x011B, 0x0106, 0x0119, 0x011D, 0x011C, 0x0109, 0x0116, 0x0128 }, { 0x0152, 0x0151 }, { 0x042B, 0x062B } },
+        { "Admin", { 0x0329, 0x0A16, 0x094F, 0x0950, 0x0807, 0x080E, 0x0B05, 0x054C, 0x043D }, { 0x014B, 0x014E }, { 0x0852, 0x0851 } }
     },
-    // 【頻道 2】 (索引 1) - Mac 繪圖與設計
     {
-        // [配置 0] Mac 系統基礎操作
-        {
-            .profile_name = "Base",
-            .keys      = { 0x0806, 0x0819, 0x081B, // Cmd+C, Cmd+V, Cmd+X
-                           0x081D, 0x0A1D, 0x0816, // Cmd+Z, Cmd+Shift+Z, Cmd+S
-                           0x0814, 0x0817, 0x082A },// Cmd+Q, Cmd+T, Cmd+Backspace
-            .wheel_v   = { 0x0852, 0x0851 },       // 垂直滾輪: Cmd+上, Cmd+下
-            .wheel_h   = { 0x084F, 0x0850 }        // 水平滾輪: Cmd+右, Cmd+左
-        },
-        // [配置 1] Photoshop 繪圖快捷鍵
-        {
-            .profile_name = "PS",
-            .keys      = { 0x0005, 0x0008, 0x0019, // B, E, V
-                           0x0010, 0x001A, 0x000C, // M, W, I
-                           0x042A, 0x0807, 0x0A11 },// Alt+Del, Cmd+D, Cmd+Shift+N
-            .wheel_v   = { 0x0030, 0x002F },       // 垂直滾輪: ], [ (調整筆刷大小)
-            .wheel_h   = { 0x082E, 0x082D }        // 水平滾輪: Cmd+=, Cmd+- (縮放畫布)
-        },
-        // [配置 2] Premiere Pro 影音剪輯
-        {
-            .profile_name = "PR",
-            .keys      = { 0x0019, 0x0006, 0x0004, // V, C, A
-                           0x0014, 0x001A, 0x0008, // Q, W, E
-                           0x002C, 0x0028, 0x0029 },// Space, Enter, Esc
-            .wheel_v   = { 0x004F, 0x0050 },       // 垂直滾輪: 右, 左 (時間軸單格前進/後退)
-            .wheel_h   = { 0x044F, 0x0450 }        // 水平滾輪: Alt+右, Alt+左 (跳躍剪輯點)
-        }
+        { "Base",  { 0x0806, 0x0819, 0x081B, 0x081D, 0x0A1D, 0x0816, 0x0814, 0x0817, 0x082A }, { 0x0852, 0x0851 }, { 0x084F, 0x0850 } },
+        { "PS",    { 0x0005, 0x0008, 0x0019, 0x0010, 0x001A, 0x000C, 0x042A, 0x0807, 0x0A11 }, { 0x0030, 0x002F }, { 0x082E, 0x082D } },
+        { "PR",    { 0x0019, 0x0006, 0x0004, 0x0014, 0x001A, 0x0008, 0x002C, 0x0028, 0x0029 }, { 0x004F, 0x0050 }, { 0x044F, 0x0450 } }
     },
-    // 【頻道 3】 (索引 2) - iPad / 行動裝置娛樂
     {
-        // [配置 0] 閱讀模式
-        {
-            .profile_name = "Read",
-            .keys      = { 0x004B, 0x004E, 0x002C, // PageUp, PageDown, Space
-                           0x004A, 0x004D, 0x0028, // Home, End, Enter
-                           0x0052, 0x0051, 0x0029 },// 上, 下, Esc
-            .wheel_v   = { 0x0051, 0x0052 },       // 垂直滾輪: 下滑, 上滑 (閱讀網頁)
-            .wheel_h   = { 0x004F, 0x0050 }        // 水平滾輪: 右翻頁, 左翻頁 (看電子書)
-        },
-        // [配置 1] 數字與計算機模式
-        {
-            .profile_name = "Num",
-            .keys      = { 0x0024, 0x0025, 0x0026, // 7, 8, 9
-                           0x0021, 0x0022, 0x0023, // 4, 5, 6
-                           0x001E, 0x001F, 0x0020 },// 1, 2, 3
-            .wheel_v   = { 0x0027, 0x002A },       // 垂直滾輪: 0, Backspace
-            .wheel_h   = { 0x002E, 0x002D }        // 水平滾輪: =, -
-        },
-        // [配置 2] F1~F9 功能鍵與系統控制
-        {
-            .profile_name = "Func",
-            .keys      = { 0x003A, 0x003B, 0x003C, // F1, F2, F3
-                           0x003D, 0x003E, 0x003F, // F4, F5, F6
-                           0x0040, 0x0041, 0x0042 },// F7, F8, F9
-            .wheel_v   = { 0x0817, 0x081A },       // 垂直滾輪: Cmd+T(開分頁), Cmd+W(關分頁)
-            .wheel_h   = { 0x012B, 0x032B }        // 水平滾輪: Ctrl+Tab, Ctrl+Shift+Tab (切換分頁)
-        }
+        { "Read",  { 0x004B, 0x004E, 0x002C, 0x004A, 0x004D, 0x0028, 0x0052, 0x0051, 0x0029 }, { 0x0051, 0x0052 }, { 0x004F, 0x0050 } },
+        { "Num",   { 0x0024, 0x0025, 0x0026, 0x0021, 0x0022, 0x0023, 0x001E, 0x001F, 0x0020 }, { 0x0027, 0x002A }, { 0x002E, 0x002D } },
+        { "Func",  { 0x003A, 0x003B, 0x003C, 0x003D, 0x003E, 0x003F, 0x0040, 0x0041, 0x0042 }, { 0x0817, 0x081A }, { 0x012B, 0x032B } }
     }
 };
 
-// --- 5. 狀態變數 ---
 uint8_t current_profile = 0;
-
-/* =========================================================
- * 【狀態控制與防彈跳變數】
- * ========================================================= */
-// 儲存 Zephyr 內部用於識別不同 MAC 位址的 Identity ID
 static uint8_t channel_ids[CH_COUNT] = {0, 1, 2};
-static uint8_t current_channel = 0;             // 目前使用的頻道 (0, 1, 或 2)
-static struct bt_conn *current_conn = NULL;     // 目前的藍牙連線物件指標
-static int64_t last_button_time = 0;            // 記錄上一次按下切換鍵的時間 (用於防彈跳)
-static int64_t last_clr_button_time = 0;        // 記錄上一次按下清除鍵的時間 (用於防彈跳)
-static int64_t last_editmode_button_time = 0;   // 記錄上一次按下編輯模式鍵的時間
+static uint8_t current_channel = 0;             
+static struct bt_conn *current_conn = NULL;     
+static int64_t last_button_time = 0;            
+static int64_t last_clr_button_time = 0;        
+static int64_t last_editmode_button_time = 0;   
+static bool volatile is_switching = false;      
 
-static bool volatile is_switching = false;      // 狀態旗標：標記目前是否正在進行頻道切換流程
-
-/* 🛡️ 新增：編輯模式同步事件與旗標 (用於喚醒背景執行緒) */
 K_EVENT_DEFINE(edit_mode_event);
 volatile bool is_edit_mode = false;
 
-/* =========================================================
- * 【關鍵防護：背景排程器 (Workqueue) 宣告】
- * ========================================================= */
 static void switch_channel_work_handler(struct k_work *work);
-K_WORK_DEFINE(switch_channel_work, switch_channel_work_handler); // 負責斷線並啟動切換
-
+K_WORK_DEFINE(switch_channel_work, switch_channel_work_handler); 
 static void complete_switch_work_handler(struct k_work *work);
-K_WORK_DEFINE(complete_switch_work, complete_switch_work_handler); // 負責切換頻道數字並重新廣播
-
+K_WORK_DEFINE(complete_switch_work, complete_switch_work_handler); 
 static void factory_reset_work_handler(struct k_work *work);
-K_WORK_DEFINE(factory_reset_work, factory_reset_work_handler); // 負責抹除 NVS 資料與重啟
-
+K_WORK_DEFINE(factory_reset_work, factory_reset_work_handler); 
 static void restart_adv_work_handler(struct k_work *work);
-K_WORK_DEFINE(restart_adv_work, restart_adv_work_handler); // 負責在非預期斷線時重啟廣播
+K_WORK_DEFINE(restart_adv_work, restart_adv_work_handler); 
 
-
-//------------------------------------------------------- BTKeyboard (藍牙鍵盤/滑鼠設定區)
-
+//------------------------------------------------------- BTKeyboard
 static int app_settings_set(const char *name, size_t len, settings_read_cb read_cb, void *cb_arg) {
     if (strcmp(name, "ch") == 0) { read_cb(cb_arg, &current_channel, sizeof(current_channel)); return 0; }
     if (strcmp(name, "ids") == 0) { read_cb(cb_arg, channel_ids, sizeof(channel_ids)); return 0; }
-    
     if (strcmp(name, "cnames") == 0) { read_cb(cb_arg, channel_names, sizeof(channel_names)); return 0; }
     if (strcmp(name, "profiles") == 0) { read_cb(cb_arg, key_profiles, sizeof(key_profiles)); return 0; }
-    
     return -ENOENT;
 }
 SETTINGS_STATIC_HANDLER_DEFINE(app_settings, "app", NULL, app_settings_set, NULL, NULL);
@@ -357,7 +263,6 @@ void editmode_button_pressed(const struct device *dev, struct gpio_callback *cb,
     int64_t now = k_uptime_get();
     if (now - last_editmode_button_time > 1000) { 
         last_editmode_button_time = now; 
-        /* 觸發事件：發送訊號通知 main() 進入編輯模式 */
         k_event_post(&edit_mode_event, 0x01);
     }
 }
@@ -395,6 +300,47 @@ static void init_bluetooth_identities(void) {
 
 // ------------------------------------------------------ BTKeyboard 結束
 
+/* ========================================================
+ * 【QDEC 編碼器背景採樣執行緒 (含硬體錯誤診斷)】
+ * ======================================================== */
+static void encoder_thread(void *p1, void *p2, void *p3) {
+    const struct device *const qdec_dev = DEVICE_DT_GET(DT_NODELABEL(qdec));
+    
+    if (!device_is_ready(qdec_dev)) {
+        printk("QDEC 設備尚未準備好！\n");
+        enc_accumulated_deg = -999; // 若網頁顯示 -999，代表設備樹 (Device Tree) 驅動掛載失敗
+        return;
+    }
+
+    struct sensor_value val;
+    int accumulated_degrees = 0;
+
+    while (1) {
+        if (sensor_sample_fetch(qdec_dev) < 0) {
+            enc_accumulated_deg = -888; // 若網頁顯示 -888，代表硬體 I2C/SPI 讀取錯誤
+            k_msleep(1000);
+            continue;
+        }
+        
+        if (sensor_channel_get(qdec_dev, SENSOR_CHAN_ROTATION, &val) == 0) {
+            int delta_degrees = val.val1;
+            if (delta_degrees != 0) {
+                accumulated_degrees += delta_degrees;
+                int clicks_moved = accumulated_degrees / DEGREES_PER_CLICK;
+                
+                if (clicks_moved != 0) {
+                    enc_total_clicks += clicks_moved;
+                    enc_last_dir = (clicks_moved > 0) ? 1 : -1;
+                    enc_seq++;
+                    accumulated_degrees %= DEGREES_PER_CLICK;
+                }
+                enc_accumulated_deg = accumulated_degrees;
+            }
+        }
+        k_msleep(20);
+    }
+}
+K_THREAD_DEFINE(encoder_thread_id, 2048, encoder_thread, NULL, NULL, NULL, 6, 0, 0);
 
 /* =========================================================
  * 【USB CDC-NCM 虛擬網卡設定】
@@ -493,7 +439,6 @@ static void mini_dhcp_thread(void *p1, void *p2, void *p3) {
             continue; 
         }
 
-        /* 🛡️ 旗標保護：純藍牙模式收到封包直接丟棄 */
         if (!is_edit_mode) continue;
 
         if (len >= 240 && buf[0] == 1) {
@@ -574,7 +519,6 @@ static void captive_portal_dns_thread(void *p1, void *p2, void *p3) {
             continue;
         }
 
-        /* 🛡️ 旗標保護：純藍牙模式收到封包直接丟棄 */
         if (!is_edit_mode) continue;
 
         if (len >= 12) {
@@ -631,7 +575,6 @@ static void init_buttons(void) {
     }
 }
 
-// 註冊 USB CDC-NCM 描述符
 static void init_usb_cdc_ncm(void) {
     int err = usbd_add_descriptor(&sample_usbd, &sample_lang); if (err) debug_halt(1, err);
     err = usbd_add_descriptor(&sample_usbd, &sample_mfr); if (err) debug_halt(1, err);
@@ -645,7 +588,6 @@ static void init_usb_cdc_ncm(void) {
     err = usbd_init(&sample_usbd); if (err) debug_halt(6, err); 
 }
 
-// 初始化網路介面 (動態植入 MAC 與設定 IP)
 static struct net_if *init_network_interface(void) {
     struct net_if *iface = net_if_get_default();
     if (!iface) debug_halt(8, 1);
@@ -679,7 +621,6 @@ static struct net_if *init_network_interface(void) {
     return iface;
 }
 
-// 初始化 TCP 伺服器 Socket
 static int init_tcp_server(void) {
     int serv_sock = zsock_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (serv_sock < 0) return -1;
@@ -696,7 +637,6 @@ static int init_tcp_server(void) {
     
     zsock_listen(serv_sock, 10);
 
-    /* 🛡️ 加上 1 秒的 Timeout，確保 Accept 不會卡死 */
     struct timeval tv = { .tv_sec = 1, .tv_usec = 0 };
     zsock_setsockopt(serv_sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
@@ -712,18 +652,15 @@ int main(void) {
     printk("XIAO nRF52840 Plus - 完美顯形商用版\n");
     printk("========================================\n");
 
-    // 1. 初始化各項硬體與周邊
     init_leds();
     init_buttons();
 
-    // 2. 初始化藍牙與身分載入
     bt_conn_auth_info_cb_register(&conn_auth_info_callbacks);
     bt_enable(NULL);
     settings_load(); 
     init_bluetooth_identities();
     start_adv_for_current_channel();
 
-    // 3. 準備網路底層與 USB (系統開機時只 Init 不 Enable，保持安靜)
     init_usb_cdc_ncm();
     struct net_if *iface = init_network_interface();
     if (!iface) debug_halt(8, 1);
@@ -731,9 +668,6 @@ int main(void) {
     int serv_sock = init_tcp_server();
     if (serv_sock < 0) return -1;
 
-    /* =========================================================
-     * 🟢 系統主迴圈 (控制 "純藍牙模式" 與 "編輯模式" 切換)
-     * ========================================================= */
     while (1) {
         /* ----- 進入【純藍牙工作模式】 ----- */
         is_edit_mode = false; 
@@ -744,16 +678,14 @@ int main(void) {
         printk("\n>>> 系統目前處於 [純藍牙工作模式]\n");
         printk(">>> 若需修改設定，請按下實體 D7 鍵以觸發 [編輯模式]...\n\n");
 
-        /* 無限期休眠等待 D7 鍵觸發 */
         k_event_wait(&edit_mode_event, 0x01, false, K_FOREVER);
-        k_event_set(&edit_mode_event, 0x00); // 收到信號，清除旗標
+        k_event_set(&edit_mode_event, 0x00); 
 
         /* ----- 進入【編輯模式】 ----- */
         printk("========================================\n");
         printk(">>> 🚀 [編輯模式] 已觸發！正在啟動 USB 網卡與網路伺服器...\n");
         printk("========================================\n");
 
-        /* 啟動網卡與設定旗標 */
         usbd_enable(&sample_usbd);
         net_if_up(iface);
 
@@ -762,21 +694,18 @@ int main(void) {
         gpio_pin_set_dt(&led_b, 0);
 
         is_edit_mode = true; 
-        gpio_pin_set_dt(&led_g, 1); // 亮綠燈代表就緒
+        gpio_pin_set_dt(&led_g, 1); 
 
         printk(">>> 網頁伺服器已就緒！請連接電腦並瀏覽 http://192.168.4.1\n");
 
         bool exit_requested = false;
         
-        /* 進入 HTTP Server 迴圈監聽 */
         while (!exit_requested) {
             struct sockaddr_in client_addr;
             socklen_t client_addr_len = sizeof(client_addr);
             
-            // Timeout 設為 1 秒，每秒會醒來檢查一次
             int client_sock = zsock_accept(serv_sock, (struct sockaddr *)&client_addr, &client_addr_len);
             
-            /* 🛡️ 檢查是否又按了 D7 實體鍵強制離開 */
             if (k_event_test(&edit_mode_event, 0x01)) {
                 k_event_set(&edit_mode_event, 0x00); 
                 exit_requested = true;
@@ -790,28 +719,29 @@ int main(void) {
             
             gpio_pin_set_dt(&led_b, 1);
             
-            /* 🛡️ 無情掛電話機制：0.5秒內不給資料就直接切斷 */
-            char rx_buf[1024] = {0};
+			/* 修正：加上 static，徹底避免執行緒堆疊爆滿當機 */
+            static char rx_buf[2048]; 
+            memset(rx_buf, 0, sizeof(rx_buf));
             int total_len = 0;
-            int wait_ms = 500; 
+            int wait_ms = 500;
             
             while (total_len < sizeof(rx_buf) - 1 && wait_ms > 0) {
                 ssize_t received = zsock_recv(client_sock, rx_buf + total_len, sizeof(rx_buf) - 1 - total_len, ZSOCK_MSG_DONTWAIT);
                 
                 if (received > 0) {
                     total_len += received;
-                    if (strstr(rx_buf, "\r\n\r\n") != NULL) break; 
+                    rx_buf[total_len] = '\0'; // 確保字串結尾安全
+                    if (strstr(rx_buf, "\r\n\r\n") != NULL) break; // 確實收到完整 Header 才跳出
                     wait_ms = 500; 
                 } else if (received == 0) {
                     break; 
                 } else {
-                    k_sleep(K_MSEC(50));
-                    wait_ms -= 50;
+                    k_sleep(K_MSEC(5));
+                    wait_ms -= 5;
                 }
             }
             
 			if (total_len > 0) {
-							/* 🌟 核心路由：攔截來自網頁的 /exit 請求 */
 							if (strstr(rx_buf, "GET /exit") != NULL) {
 								zsock_send(client_sock, ok_response, strlen(ok_response), 0);
 								exit_requested = true; 
@@ -828,7 +758,6 @@ int main(void) {
 								const char *not_found = "HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n";
 								zsock_send(client_sock, not_found, strlen(not_found), 0);
 							}
-							/* 👇 這裡就是新增的 API，用來回傳頻道名稱 👇 */
 							else if (strstr(rx_buf, "GET /api/channels") != NULL) {
 								char json_resp[256];
 								snprintf(json_resp, sizeof(json_resp),
@@ -839,8 +768,6 @@ int main(void) {
 										 channel_names[0], channel_names[1], channel_names[2]);
 								zsock_send(client_sock, json_resp, strlen(json_resp), 0);
 							}
-							
-							/* 👇 取得特定頻道的 Profile 列表 👇 */
 							else if (strncmp(rx_buf, "GET /api/profiles?ch=", 21) == 0) {
 								int ch = rx_buf[21] - '0';
 								char json_resp[256];
@@ -859,7 +786,6 @@ int main(void) {
 								}
 								zsock_send(client_sock, json_resp, strlen(json_resp), 0);
 							}
-							/* 👇 處理重新命名請求 (同時支援 Channel 與 Profile) 👇 */
                             else if (strncmp(rx_buf, "GET /api/rename?", 16) == 0) {
                                 char *ch_ptr = strstr(rx_buf, "ch=");
                                 char *pf_ptr = strstr(rx_buf, "pf=");
@@ -871,7 +797,6 @@ int main(void) {
                                     int pf = pf_ptr[3] - '0';
                                     
                                     if (ch >= 0 && ch < CH_COUNT && pf >= 0 && pf < PROFILE_COUNT) {
-                                        // 1. 解碼並更新 Channel 名稱
                                         if (cname_ptr) {
                                             char *src = cname_ptr + 6;
                                             char new_cname[MAX_CH_NAME_LEN] = {0};
@@ -891,7 +816,6 @@ int main(void) {
                                             channel_names[ch][MAX_CH_NAME_LEN - 1] = '\0';
                                         }
 
-                                        // 2. 解碼並更新 Profile 名稱
                                         if (pname_ptr) {
                                             char *src = pname_ptr + 6;
                                             char new_pname[MAX_PROF_NAME_LEN] = {0};
@@ -911,15 +835,12 @@ int main(void) {
                                             key_profiles[ch][pf].profile_name[MAX_PROF_NAME_LEN - 1] = '\0';
                                         }
 
-                                        // 永久寫入 NVS
                                         settings_save_one("app/cnames", channel_names, sizeof(channel_names));
                                         settings_save_one("app/profiles", key_profiles, sizeof(key_profiles));
                                     }
                                 }
                                 zsock_send(client_sock, ok_response, strlen(ok_response), 0);
                             }
-
-							/* 👇 取得當前 Profile 的按鍵配置 (回傳 13 顆按鍵的 16-bit 鍵碼) 👇 */
                             else if (strncmp(rx_buf, "GET /api/keys?", 14) == 0) {
                                 char *ch_ptr = strstr(rx_buf, "ch=");
                                 char *pf_ptr = strstr(rx_buf, "pf=");
@@ -951,8 +872,6 @@ int main(void) {
                                 }
                                 zsock_send(client_sock, json_resp, strlen(json_resp), 0);
                             }
-
-                            /* 👇 設定單顆按鍵快捷鍵並永久寫入 NVS 👇 */
                             else if (strncmp(rx_buf, "GET /api/setkey?", 16) == 0) {
                                 char *ch_ptr = strstr(rx_buf, "ch=");
                                 char *pf_ptr = strstr(rx_buf, "pf=");
@@ -991,12 +910,26 @@ int main(void) {
                                 }
                                 zsock_send(client_sock, ok_response, strlen(ok_response), 0);
                             }
-                            /* 👆 ========================================= 👆 */
+							/* 1. 補回 Content-Length 防護，讓瀏覽器收完字元立即判定成功 */
+							else if (strstr(rx_buf, "GET /api/encoder") != NULL) {
+								char body[64];
+								int body_len = snprintf(body, sizeof(body),
+										 "{\"dir\":%d,\"deg\":%d,\"total\":%d,\"seq\":%u}",
+										 enc_last_dir, enc_accumulated_deg, enc_total_clicks, enc_seq);
+
+								char json_resp[192];
+								int resp_len = snprintf(json_resp, sizeof(json_resp),
+										 "HTTP/1.1 200 OK\r\n"
+										 "Content-Type: application/json\r\n"
+										 "Content-Length: %d\r\n"
+										 "Connection: close\r\n\r\n%s",
+										 body_len, body);
+
+								zsock_send(client_sock, json_resp, resp_len, 0);
+							}
 							else if (strstr(rx_buf, "GET / ") != NULL || strstr(rx_buf, "GET /index.html") != NULL) {
-								/* 1. 先發送 HTTP 標頭 */
 								zsock_send(client_sock, html_header, strlen(html_header), 0);
 								
-								/* 2. 🛡️ 升級：大檔案分塊發送機制 (TCP Chunking) */
 								int total_sent = 0;
 								int html_size = sizeof(html_body);
 								
@@ -1015,21 +948,32 @@ int main(void) {
 			#endif
 							}
 						}
-            
+			
+			/* ----- 替換此區塊 ----- */
             zsock_shutdown(client_sock, ZSOCK_SHUT_WR);
-            char drain_buf[128];
-            while (zsock_recv(client_sock, drain_buf, sizeof(drain_buf), ZSOCK_MSG_DONTWAIT) > 0) {}
             
-            k_sleep(K_MSEC(50)); 
+            char drain_buf[64];
+            int linger_timeout = 100; // 最多等待 100ms 讓瀏覽器完成揮手
+            
+            while (linger_timeout > 0) {
+                int r = zsock_recv(client_sock, drain_buf, sizeof(drain_buf), ZSOCK_MSG_DONTWAIT);
+                if (r == 0) { 
+                    break; // 收到 0 (EOF)，代表對端已完美關閉，安全跳出！
+                } else if (r < 0) { 
+                    k_sleep(K_MSEC(5)); 
+                    linger_timeout -= 5; 
+                } else { 
+                    linger_timeout = 100; // 還有殘留資料，重置計時器繼續抽乾
+                }
+            }
+            
             zsock_close(client_sock);
             gpio_pin_set_dt(&led_b, 0);
-        }
+        } // 結束 while 迴圈
         
-        // 離開編輯模式的清理
-        /* 🛑 軟重啟退出機制：乾淨俐落避開所有作業系統 Bug */
         printk("\n>>> 收到 EXIT 請求，系統即將重新啟動以安全退出編輯模式...\n");
-        k_sleep(K_MSEC(1000)); // 給 TCP 回覆一點時間傳送出去
-		usbd_disable(&sample_usbd); // 主動卸載 USB 設備
+        k_sleep(K_MSEC(1000)); 
+		usbd_disable(&sample_usbd); 
         k_sleep(K_MSEC(100));
         sys_reboot(SYS_REBOOT_WARM);
     }

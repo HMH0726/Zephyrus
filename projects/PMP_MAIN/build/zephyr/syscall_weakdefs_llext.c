@@ -169,6 +169,13 @@ extern __weak ALIAS_OF(no_syscall_impl) void * const z_impl_net_if_ipv6_addr_add
 extern __weak ALIAS_OF(no_syscall_impl) void * const z_impl_net_if_ipv6_addr_lookup_by_index;
 extern __weak ALIAS_OF(no_syscall_impl) void * const z_impl_net_if_ipv6_addr_rm_by_index;
 extern __weak ALIAS_OF(no_syscall_impl) void * const z_impl_nrf_qspi_nor_xip_enable;
+extern __weak ALIAS_OF(no_syscall_impl) void * const z_impl_sensor_attr_get;
+extern __weak ALIAS_OF(no_syscall_impl) void * const z_impl_sensor_attr_set;
+extern __weak ALIAS_OF(no_syscall_impl) void * const z_impl_sensor_channel_get;
+extern __weak ALIAS_OF(no_syscall_impl) void * const z_impl_sensor_get_decoder;
+extern __weak ALIAS_OF(no_syscall_impl) void * const z_impl_sensor_reconfigure_read_iodev;
+extern __weak ALIAS_OF(no_syscall_impl) void * const z_impl_sensor_sample_fetch;
+extern __weak ALIAS_OF(no_syscall_impl) void * const z_impl_sensor_sample_fetch_chan;
 extern __weak ALIAS_OF(no_syscall_impl) void * const z_impl_sys_clock_getrtoffset;
 extern __weak ALIAS_OF(no_syscall_impl) void * const z_impl_sys_clock_hw_cycles_per_sec_runtime_get;
 extern __weak ALIAS_OF(no_syscall_impl) void * const z_impl_sys_clock_nanosleep;

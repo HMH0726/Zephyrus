@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="data:,">
+    <title>XIAO 控制面板</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            display: flex; flex-direction: column; align-items: center;
+            margin: 0; padding-top: 80px; background-color: #222; 
+            color: white; font-family: sans-serif; text-align: center;
+        }
+
+        .fixed-header {
+            position: fixed; top: 0; left: 0; width: 100%; 
+            background-color: #333; padding: 15px 0; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5); 
+            z-index: 1000; display: flex; justify-content: center; align-items: center;
+        }
+
+        .fixed-header h1 { margin: 0; font-size: 24px; color: #4CAF50; }
+        .custom-font { font-family: monospace, sans-serif; color: #aaa; font-size: 18px; letter-spacing: 1px; }
+
+        .main-content {
+            display: flex; flex-direction: column; justify-content: flex-start;
+            align-items: center; width: 100%; min-height: calc(100vh - 80px); 
+            padding-bottom: 50px;
+        }
+
+        .top-controls {
+            display: flex; width: 95%; max-width: 450px;
+            border-top: 1px solid #000; border-left: 1px solid #000; margin-bottom: 20px;
+        }
+
+        .top-controls select {
+            flex: 1; min-width: 75px; padding: 10px 2px; font-size: 16px;
+            background-color: #333; color: white; border: none;
+            border-right: 1px solid #000; border-bottom: 1px solid #000;
+            border-radius: 0; outline: none; cursor: pointer; font-family: inherit;
+            appearance: none; -webkit-appearance: none; text-align: center;
+            transition: background-color 0.15s;
+        }
+
+        .top-controls select:hover { background-color: #3d3d3d; }
+        .top-controls select:focus { background-color: #444; }
+
+        .name-edit-group {
+            display: flex; flex: 2; min-width: 220px; align-items: center;
+            background-color: #333; border: none; border-right: 1px solid #000;
+            border-bottom: 1px solid #000; border-radius: 0;
+            padding: 5px 10px; justify-content: space-between;
+        }
+
+        .name-display-container {
+            display: flex; flex: 1; justify-content: center; align-items: center; 
+            gap: 5px; overflow: hidden; font-size: 16px; color: #fff; white-space: nowrap;
+        }
+
+        .name-input-container {
+            display: none; flex: 1; justify-content: center; align-items: center; gap: 4px;
+        }
+
+        .name-input-container input {
+            width: 42%; min-width: 45px; padding: 5px; font-size: 14px;
+            background-color: #222; color: #fff; border: 1px solid #4CAF50;
+            border-radius: 4px; text-align: center; outline: none; font-family: inherit;
+        }
+
+        #renameBtn {
+            font-size: 14px; padding: 6px 10px; margin: 0 0 0 10px;
+            background-color: #4CAF50; color: white; border: none;
+            border-radius: 4px; cursor: pointer; transition: 0.15s; white-space: nowrap;
+        }
+
+        #renameBtn:hover { background-color: #45a049; }
+        #renameBtn:active { background-color: #388e3c; }
+
+        .KeyPadLayout {
+            display: flex; width: 95%; max-width: 450px; 
+            border-top: 1px solid #000; border-left: 1px solid #000; margin-bottom: 20px;
+        }
+
+        .grid-3x3 { display: grid; grid-template-columns: repeat(3, 1fr); flex: 2; }
+        .grid-1x2 { display: grid; grid-template-columns: 1fr; flex: 1; }
+
+        .box {
+            aspect-ratio: 1 / 1; padding: 5px; margin: 0; outline: none; border: none; 
+            border-right: 1px solid #000; border-bottom: 1px solid #000;
+            background-color: #f0f0f0; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; font-family: inherit; 
+            color: #000; cursor: pointer; transition: background-color 0.15s ease; border-radius: 0;
+            overflow: hidden; box-sizing: border-box;
+            appearance: none; -webkit-appearance: none;
+        }
+
+        .box:hover { background-color: #dedede; }
+        .box:active { background-color: #bcbcbc !important; }
+        .box.selected { background-color: #a5d6a7; }
+        .box.selected:hover { background-color: #8fc892; }
+        .box.selected:active { background-color: #70b274 !important; }
+        
+        .btn-title { font-size: 20px; font-weight: bold; pointer-events: none;}
+        .btn-desc { font-size: 10px; color: #555; margin-top: 4px; word-break: break-all; pointer-events: none; line-height: 1.1;}
+
+        .encoder-box {
+            position: relative;
+            padding: 0;
+            cursor: default;
+            background-color: #f0f0f0;
+        }
+
+        .encoder-box:hover { background-color: #f0f0f0; }
+        .encoder-box:active { background-color: #f0f0f0; }
+
+        .encoder-box.vertical {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .encoder-box.horizontal {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .encoder-center-title {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            font-weight: bold;
+            color: #000;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .encoder-sub-btn {
+            margin: 0;
+            background-color: transparent;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            display: flex;
+            box-sizing: border-box;
+            transition: background-color 0.15s ease;
+            z-index: 1;
+            appearance: none;
+            -webkit-appearance: none;
+            border-radius: 0;
+        }
+
+        .encoder-sub-btn:hover { background-color: #dedede; }
+        .encoder-sub-btn:active { background-color: #bcbcbc !important; }
+        .encoder-sub-btn.selected { background-color: #a5d6a7; }
+        .encoder-sub-btn.selected:hover { background-color: #8fc892; }
+        .encoder-sub-btn.selected:active { background-color: #70b274 !important; }
+
+        .encoder-box.vertical .encoder-sub-btn {
+            width: 100%;
+            height: 50%;
+            justify-content: center;
+            padding: 6px 8px;
+        }
+        .encoder-box.vertical .encoder-sub-btn.top { align-items: flex-start; }
+        .encoder-box.vertical .encoder-sub-btn.bottom { align-items: flex-end; }
+
+        .encoder-box.horizontal .encoder-sub-btn {
+            width: 50%;
+            height: 100%;
+            margin: 0;
+        }
+
+        .encoder-text-top {
+            position: absolute;
+            top: 6px;
+            left: 4px;
+            right: 4px;
+            text-align: center;
+            z-index: 3;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+
+        .encoder-text-bottom {
+            position: absolute;
+            bottom: 6px;
+            left: 4px;
+            right: 4px;
+            text-align: center;
+            z-index: 3;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+
+        .encoder-text-top:hover, .encoder-text-bottom:hover { color: #000; }
+
+        #box-B:has(#desc-B_L:hover) #btn-B_L:not(.selected) { background-color: #dedede; }
+        #box-B:has(#desc-B_L:active) #btn-B_L:not(.selected) { background-color: #bcbcbc; }
+        #box-B:has(#desc-B_L:hover) #btn-B_L.selected { background-color: #8fc892; }
+        #box-B:has(#desc-B_L:active) #btn-B_L.selected { background-color: #70b274; }
+
+        #box-B:has(#desc-B_R:hover) #btn-B_R:not(.selected) { background-color: #dedede; }
+        #box-B:has(#desc-B_R:active) #btn-B_R:not(.selected) { background-color: #bcbcbc; }
+        #box-B:has(#desc-B_R:hover) #btn-B_R.selected { background-color: #8fc892; }
+        #box-B:has(#desc-B_R:active) #btn-B_R.selected { background-color: #70b274; }
+
+        .encoder-sub-btn.sync-hover:not(.selected) { background-color: #dedede; }
+        .encoder-sub-btn.sync-active:not(.selected) { background-color: #bcbcbc; }
+        .encoder-sub-btn.sync-hover.selected { background-color: #8fc892; }
+        .encoder-sub-btn.sync-active.selected { background-color: #70b274; }
+
+        .sub-desc {
+            font-size: 10px;
+            font-weight: bold;
+            color: #444;
+            word-break: break-all;
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .config-panel {
+            width: 95%; max-width: 450px; border: 1px solid #000; display: flex; flex-direction: column;
+            background-color: #333; margin-bottom: 20px; box-sizing: border-box;
+        }
+
+        .key-input-wrapper { display: flex; flex-direction: column; padding: 15px; }
+        
+        .key-input-area {
+            min-height: 50px; background-color: #222; border: 2px dashed #555;
+            border-radius: 6px; display: flex; flex-wrap: wrap; justify-content: center;
+            align-items: center; gap: 8px; padding: 10px; cursor: pointer; transition: 0.2s;
+        }
+
+        .key-input-area:hover { border-color: #777; background-color: #262626; }
+        .key-input-area.active { border-color: #4CAF50; background-color: #2a332a; }
+        
+        .placeholder { color: #888; font-size: 14px; pointer-events: none; }
+        
+        .key-item {
+            background-color: #555; color: white; padding: 5px 10px; border-radius: 4px;
+            font-size: 14px; cursor: pointer; transition: 0.15s; border: 1px solid #777;
+        }
+        .key-item:hover { background-color: #666; }
+        .key-item:active { background-color: #444; }
+        .key-item.active { background-color: #e74c3c; border-color: #c0392b; }
+        .key-item.active:hover { background-color: #d32f2f; }
+
+        .key-controls { display: flex; justify-content: space-between; margin-top: 15px; gap: 10px; }
+        
+        .tool-btn {
+            flex: 1; font-size: 14px; padding: 8px; background-color: #555; 
+            color: white; border: none; border-radius: 6px; cursor: pointer;
+            transition: background-color 0.15s;
+        }
+        .tool-btn:hover { background-color: #666; }
+        .tool-btn:active { background-color: #444; }
+        
+        .set-btn {
+            flex: 2; font-size: 16px; padding: 8px; background-color: #4CAF50; 
+            color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;
+            transition: background-color 0.15s;
+        }
+        .set-btn:hover { background-color: #45a049; }
+        .set-btn:active { background-color: #388e3c; }
+
+        .led-controls { margin-top: 5px; margin-bottom: 10px; }
+        .sys-btn { font-size: 18px; padding: 12px 30px; margin: 5px; border-radius: 8px; cursor: pointer; border: none; transition: 0.15s; }
+        .on-btn { background-color: #4CAF50; color: white; }
+        .on-btn:hover { background-color: #45a049; }
+        .on-btn:active { background-color: #388e3c; }
+
+        .off-btn { background-color: #f44336; color: white; }
+        .off-btn:hover { background-color: #e53935; }
+        .off-btn:active { background-color: #c62828; }
+
+        .exit-btn { background-color: #555; color: white; font-size: 16px; padding: 10px 40px; margin-top: 10px; }
+        .exit-btn:hover { background-color: #666; }
+        .exit-btn:active { background-color: #444; }
+        button:disabled { background-color: #444; color: #888; cursor: not-allowed; }
+        .footer { margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="fixed-header">
+        <h1>XIAO 控制面板</h1>
+    </div>
+
+    <div class="main-content">
+        <div class="top-controls">
+            <select id="channelSelect" onchange="onChannelChange()"><option value="">讀取中...</option></select>
+            <select id="profileSelect" onchange="onProfileChange()">
+                <option value="0">PF 1</option><option value="1">PF 2</option><option value="2">PF 3</option>
+            </select>
+            <div class="name-edit-group">
+                <div id="nameDisplayContainer" class="name-display-container">
+                    <span id="channelNameDisplay">CH</span><span style="color: #888;">-</span><span id="profileNameDisplay">PF</span>
+                </div>
+                <div id="nameInputContainer" class="name-input-container">
+                    <input type="text" id="channelNameInput" maxlength="8" placeholder="Channel">
+                    <span style="color: #888;">-</span>
+                    <input type="text" id="profileNameInput" maxlength="8" placeholder="Profile">
+                </div>
+                <button id="renameBtn" onclick="toggleRename()">更名</button>
+            </div>
+        </div>
+
+        <div class="KeyPadLayout">
+            <div class="grid-3x3">
+                <button class="box" id="btn-1" onclick="selectButton('1')"><span class="btn-title">1</span><span class="btn-desc" id="desc-1"></span></button>
+                <button class="box" id="btn-2" onclick="selectButton('2')"><span class="btn-title">2</span><span class="btn-desc" id="desc-2"></span></button>
+                <button class="box" id="btn-3" onclick="selectButton('3')"><span class="btn-title">3</span><span class="btn-desc" id="desc-3"></span></button>
+                <button class="box" id="btn-4" onclick="selectButton('4')"><span class="btn-title">4</span><span class="btn-desc" id="desc-4"></span></button>
+                <button class="box" id="btn-5" onclick="selectButton('5')"><span class="btn-title">5</span><span class="btn-desc" id="desc-5"></span></button>
+                <button class="box" id="btn-6" onclick="selectButton('6')"><span class="btn-title">6</span><span class="btn-desc" id="desc-6"></span></button>
+                <button class="box" id="btn-7" onclick="selectButton('7')"><span class="btn-title">7</span><span class="btn-desc" id="desc-7"></span></button>
+                <button class="box" id="btn-8" onclick="selectButton('8')"><span class="btn-title">8</span><span class="btn-desc" id="desc-8"></span></button>
+                <button class="box" id="btn-9" onclick="selectButton('9')"><span class="btn-title">9</span><span class="btn-desc" id="desc-9"></span></button>
+            </div>
+            
+            <div class="grid-1x2">
+                <div class="box encoder-box vertical" id="box-A">
+                    <button type="button" class="encoder-sub-btn top" id="btn-A_FWD" onclick="selectButton('A_FWD')">
+                        <span class="sub-desc" id="desc-A_FWD"></span>
+                    </button>
+                    <span class="encoder-center-title">A</span>
+                    <button type="button" class="encoder-sub-btn bottom" id="btn-A_REV" onclick="selectButton('A_REV')">
+                        <span class="sub-desc" id="desc-A_REV"></span>
+                    </button>
+                </div>
+                
+                <div class="box encoder-box horizontal" id="box-B">
+                    <button type="button" class="encoder-sub-btn left" id="btn-B_L" onclick="selectButton('B_L')"></button>
+                    <button type="button" class="encoder-sub-btn right" id="btn-B_R" onclick="selectButton('B_R')"></button>
+                    
+                    <span class="encoder-text-top sub-desc" id="desc-B_L" onclick="selectButton('B_L')"
+                          onmouseenter="syncHover('btn-B_L', true)" onmouseleave="syncHover('btn-B_L', false)"
+                          onmousedown="syncActive('btn-B_L', true)" onmouseup="syncActive('btn-B_L', false)"></span>
+                    <span class="encoder-center-title">B</span>
+                    <span class="encoder-text-bottom sub-desc" id="desc-B_R" onclick="selectButton('B_R')"
+                          onmouseenter="syncHover('btn-B_R', true)" onmouseleave="syncHover('btn-B_R', false)"
+                          onmousedown="syncActive('btn-B_R', true)" onmouseup="syncActive('btn-B_R', false)"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="config-panel">
+            <div class="key-input-wrapper">
+                <div id="key-input-area" class="key-input-area">
+                    <span class="placeholder" id="input-placeholder">請先在上方點擊目標按鈕</span>
+                </div>
+                
+                <div class="key-controls">
+                    <button class="tool-btn" onclick="removeSelectedKeys()">移除所選</button>
+                    <button class="tool-btn" onclick="clearSelectedShortcut()">清空</button>
+                    <button class="set-btn" onclick="setShortcut()">儲存設定 (SET)</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="led-controls">
+            <button class="sys-btn on-btn" onclick="sendReq('/led/on')">打開綠燈</button>
+            <button class="sys-btn off-btn" onclick="sendReq('/led/off')">關閉綠燈</button>
+        </div>
+        <button class="sys-btn exit-btn" onclick="closeWindow()">Exit</button>
+        
+        <div class="footer">
+            <div>© <span class="custom-font">ORESANJO</span> / <span class="custom-font">SHUNNN</span></div>
+            <div style="color: #666; font-size: 12px; margin-top: 5px;">20260907 V_STABLE</div>
+        </div>
+    </div>
+
+    <script>
+        const MOD_MAP = {
+            'CONTROL': 0x01, 'LEFT CONTROL': 0x01, 'RIGHT CONTROL': 0x01,
+            'SHIFT': 0x02, 'LEFT SHIFT': 0x02, 'RIGHT SHIFT': 0x02,
+            'ALT': 0x04, 'LEFT ALT': 0x04, 'RIGHT ALT': 0x04,
+            'META': 0x08, 'LEFT META': 0x08, 'RIGHT META': 0x08
+        };
+
+        const KEY_TO_HID = {
+            'A': 0x04, 'B': 0x05, 'C': 0x06, 'D': 0x07, 'E': 0x08, 'F': 0x09,
+            'G': 0x0A, 'H': 0x0B, 'I': 0x0C, 'J': 0x0D, 'K': 0x0E, 'L': 0x0F,
+            'M': 0x10, 'N': 0x11, 'O': 0x12, 'P': 0x13, 'Q': 0x14, 'R': 0x15,
+            'S': 0x16, 'T': 0x17, 'U': 0x18, 'V': 0x19, 'W': 0x1A, 'X': 0x1B,
+            'Y': 0x1C, 'Z': 0x1D, '1': 0x1E, '2': 0x1F, '3': 0x20, '4': 0x21,
+            '5': 0x22, '6': 0x23, '7': 0x24, '8': 0x25, '9': 0x26, '0': 0x27,
+            'ENTER': 0x28, 'ESCAPE': 0x29, 'BACKSPACE': 0x2A, 'TAB': 0x2B, 'SPACE': 0x2C,
+            '-': 0x2D, '=': 0x2E, '[': 0x2F, ']': 0x30, '\\': 0x31, ';': 0x33,
+            '\'': 0x34, '`': 0x35, ',': 0x36, '.': 0x37, '/': 0x38, 'CAPSLOCK': 0x39,
+            'F1': 0x3A, 'F2': 0x3B, 'F3': 0x3C, 'F4': 0x3D, 'F5': 0x3E, 'F6': 0x3F,
+            'F7': 0x40, 'F8': 0x41, 'F9': 0x42, 'F10': 0x43, 'F11': 0x44, 'F12': 0x45,
+            'PRINT SCREEN': 0x46, 'SCROLL LOCK': 0x47, 'PAUSE': 0x48, 'INSERT': 0x49,
+            'HOME': 0x4A, 'PAGE UP': 0x4B, 'DELETE': 0x4C, 'END': 0x4D, 'PAGE DOWN': 0x4E,
+            'ARROW RIGHT': 0x4F, 'ARROW LEFT': 0x50, 'ARROW DOWN': 0x51, 'ARROW UP': 0x52
+        };
+
+        const HID_TO_KEY = {};
+        for (let k in KEY_TO_HID) HID_TO_KEY[KEY_TO_HID[k]] = k;
+
+        function encodeKeys(keyArray) {
+            let mod = 0;
+            let normalKey = 0;
+            for (let k of keyArray) {
+                if (MOD_MAP[k]) {
+                    mod |= MOD_MAP[k];
+                } else if (KEY_TO_HID[k]) {
+                    normalKey = KEY_TO_HID[k];
+                }
+            }
+            return (mod << 8) | normalKey;
+        }
+
+        function decodeCode(code) {
+            if (!code || code === 0) return '';
+            let mod = (code >> 8) & 0xFF;
+            let hid = code & 0xFF;
+            let parts = [];
+
+            if (mod & 0x01) parts.push('Ctrl');
+            if (mod & 0x02) parts.push('Shift');
+            if (mod & 0x04) parts.push('Alt');
+            if (mod & 0x08) parts.push('Win');
+            if (hid && HID_TO_KEY[hid]) parts.push(HID_TO_KEY[hid]);
+
+            return parts.join('+');
+        }
+
+        let currentChannels = ["Win", "Mac", "iPad"];
+        let currentProfiles = ["PF 1", "PF 2", "PF 3"];
+
+        window.onload = function() {
+            fetch('/api/channels')
+                .then(response => response.json())
+                .then(data => {
+                    const selectElement = document.getElementById('channelSelect');
+                    selectElement.innerHTML = ''; 
+                    currentChannels = data;
+                    data.forEach((name, index) => {
+                        const displayName = (name && name.trim() !== '') ? name : 'None';
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = `CH ${index + 1} - ${displayName}`;
+                        selectElement.appendChild(option);
+                    });
+                    onChannelChange();
+                })
+                .catch(err => {
+                    console.log('讀取頻道資料失敗', err);
+                    document.getElementById('channelSelect').innerHTML = '<option value="">讀取失敗</option>';
+                });
+        };
+
+        function onChannelChange() {
+            const ch = document.getElementById('channelSelect').value;
+            if (ch === "") return;
+            const cName = currentChannels[ch] || "None";
+            document.getElementById('channelNameDisplay').textContent = cName;
+
+            fetch(`/api/profiles?ch=${ch}`)
+                .then(response => response.json())
+                .then(data => {
+                    currentProfiles = data;
+                    onProfileChange();
+                })
+                .catch(err => console.log('讀取配置檔失敗', err));
+        }
+
+        function onProfileChange() {
+            const ch = document.getElementById('channelSelect').value;
+            const pf = document.getElementById('profileSelect').value;
+            if (ch === "" || pf === "") return;
+            const pName = currentProfiles[pf] || `預設配置 ${parseInt(pf) + 1}`;
+            document.getElementById('profileNameDisplay').textContent = pName;
+
+            fetch(`/api/keys?ch=${ch}&pf=${pf}`)
+                .then(response => response.json())
+                .then(keysData => {
+                    for (let id in keysData) {
+                        const descEl = document.getElementById(`desc-${id}`);
+                        if (descEl) {
+                            const readable = decodeCode(keysData[id]);
+                            renderButtonLabel(id, readable);
+                        }
+                    }
+                })
+                .catch(err => console.log('讀取按鍵配置失敗', err));
+        }
+
+        function renderButtonLabel(id, text) {
+            const el = document.getElementById(`desc-${id}`);
+            if (!el) return;
+            if (text) {
+                if (id === 'A_FWD') el.textContent = '前: ' + text;
+                else if (id === 'A_REV') el.textContent = '後: ' + text;
+                else if (id === 'B_L') el.textContent = '左: ' + text;
+                else if (id === 'B_R') el.textContent = '右: ' + text;
+                else el.textContent = text;
+            } else {
+                el.textContent = '';
+            }
+        }
+
+        let isEditingName = false;
+        function toggleRename() {
+            const displayContainer = document.getElementById('nameDisplayContainer');
+            const inputContainer = document.getElementById('nameInputContainer');
+            const cDisplay = document.getElementById('channelNameDisplay');
+            const pDisplay = document.getElementById('profileNameDisplay');
+            const cInput = document.getElementById('channelNameInput');
+            const pInput = document.getElementById('profileNameInput');
+            const btn = document.getElementById('renameBtn');
+            const ch = document.getElementById('channelSelect').value;
+            const pf = document.getElementById('profileSelect').value;
+
+            if (!isEditingName) {
+                cInput.value = (cDisplay.textContent === "None") ? "" : cDisplay.textContent;
+                pInput.value = (pDisplay.textContent === "None") ? "" : pDisplay.textContent;
+                displayContainer.style.display = 'none';
+                inputContainer.style.display = 'flex';
+                btn.textContent = '完成'; btn.style.backgroundColor = '#e74c3c'; 
+                isEditingName = true; cInput.focus();
+            } else {
+                const newCName = cInput.value.trim() || "None";
+                const newPName = pInput.value.trim() || "None";
+                const url = `/api/rename?ch=${ch}&pf=${pf}&cname=${encodeURIComponent(newCName)}&pname=${encodeURIComponent(newPName)}`;
+                
+                fetch(url).then(response => {
+                    if (!response.ok) throw new Error("API Error");
+                    currentChannels[ch] = newCName; currentProfiles[pf] = newPName;
+                    document.getElementById('channelSelect').options[ch].textContent = `CH ${parseInt(ch) + 1} - ${newCName}`;
+                    cDisplay.textContent = newCName; pDisplay.textContent = newPName;
+                    inputContainer.style.display = 'none'; displayContainer.style.display = 'flex';
+                    btn.textContent = '更名'; btn.style.backgroundColor = '#4CAF50';
+                    isEditingName = false;
+                }).catch(err => alert("更名失敗，請確認連線！"));
+            }
+        }
+
+        // ==========================================
+        // 快捷鍵錄製與設定邏輯
+        // ==========================================
+        let selectedButtonId = null;
+        let isKey2Active = false; 
+        let key2Array = []; 
+
+        const buttonLabels = {
+            '1': '按鈕 1', '2': '按鈕 2', '3': '按鈕 3',
+            '4': '按鈕 4', '5': '按鈕 5', '6': '按鈕 6',
+            '7': '按鈕 7', '8': '按鈕 8', '9': '按鈕 9',
+            'A_FWD': 'A (前滾)', 'A_REV': 'A (後滾)',
+            'B_L': 'B (左滾)', 'B_R': 'B (右滾)'
+        };
+
+        const allowedKeys = new Set(Object.keys(MOD_MAP).concat(Object.keys(KEY_TO_HID)));
+        const keyInputArea = document.getElementById('key-input-area');
+
+        function syncHover(btnId, isHover) {
+            const btn = document.getElementById(btnId);
+            if (btn) btn.classList.toggle('sync-hover', isHover);
+        }
+
+        function syncActive(btnId, isActive) {
+            const btn = document.getElementById(btnId);
+            if (btn) btn.classList.toggle('sync-active', isActive);
+        }
+
+        function clearInputBuffer() {
+            key2Array = [];
+            updateKeyDisplay();
+        }
+
+        function clearSelectedShortcut() {
+            if (!selectedButtonId) return;
+            const ch = document.getElementById('channelSelect').value;
+            const pf = document.getElementById('profileSelect').value;
+
+            fetch(`/api/setkey?ch=${ch}&pf=${pf}&id=${selectedButtonId}&code=0`)
+                .then(res => {
+                    if (!res.ok) throw new Error();
+                    key2Array = [];
+                    renderButtonLabel(selectedButtonId, '');
+                    isKey2Active = false;
+                    keyInputArea.classList.remove('active');
+                    updateKeyDisplay();
+                })
+                .catch(() => alert("清空設定失敗，請確認連線！"));
+        }
+
+        function selectButton(btnId) {
+            document.querySelectorAll('.box, .encoder-sub-btn').forEach(b => b.classList.remove('selected'));
+            
+            selectedButtonId = btnId;
+            const targetEl = document.getElementById(`btn-${btnId}`);
+            if (targetEl) targetEl.classList.add('selected');
+            
+            clearInputBuffer();
+            isKey2Active = true;
+            keyInputArea.classList.add('active');
+            updateKeyDisplay();
+        }
+
+        keyInputArea.addEventListener('click', () => {
+            if(!selectedButtonId) {
+                alert("請先在上方點擊選擇一個目標按鈕！");
+                return;
+            }
+            isKey2Active = true;
+            keyInputArea.classList.add('active');
+            updateKeyDisplay();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!keyInputArea.contains(e.target) && !e.target.closest('.box') && !e.target.closest('.encoder-sub-btn') && !e.target.closest('.encoder-text-top') && !e.target.closest('.encoder-text-bottom') && !e.target.closest('.key-controls')) {
+                isKey2Active = false;
+                keyInputArea.classList.remove('active');
+                updateKeyDisplay();
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (!isKey2Active) return;
+
+            event.preventDefault(); 
+
+            let key = event.key.toUpperCase();
+            
+            if (key === ' ') key = 'SPACE';
+            else if (key === 'ARROWUP') key = 'ARROW UP';
+            else if (key === 'ARROWDOWN') key = 'ARROW DOWN';
+            else if (key === 'ARROWLEFT') key = 'ARROW LEFT';
+            else if (key === 'ARROWRIGHT') key = 'ARROW RIGHT';
+            else if (key === 'PAGEUP') key = 'PAGE UP';
+            else if (key === 'PAGEDOWN') key = 'PAGE DOWN';
+            else if (key === 'PRINTSCREEN') key = 'PRINT SCREEN';
+            else if (key === 'SCROLLLOCK') key = 'SCROLL LOCK';
+
+            if (!allowedKeys.has(key)) return;
+
+            if (MOD_MAP[key]) {
+                if (!key2Array.includes(key)) {
+                    key2Array.push(key);
+                }
+            } 
+            else if (KEY_TO_HID[key]) {
+                key2Array = key2Array.filter(k => MOD_MAP[k]);
+                key2Array.push(key);
+            }
+
+            updateKeyDisplay();
+        });
+
+        function updateKeyDisplay() {
+            if (key2Array.length === 0) {
+                const targetName = buttonLabels[selectedButtonId] || "目標按鈕";
+                keyInputArea.innerHTML = isKey2Active ? 
+                    `<span class="placeholder">正在錄製 [${targetName}]：請按下組合鍵...</span>` : 
+                    `<span class="placeholder">已選擇 [${targetName}]，點擊此處開始錄製</span>`;
+            } else {
+                keyInputArea.innerHTML = key2Array.map(item => `<span class="key-item">${item}</span>`).join('<span style="color:#aaa;">+</span>');
+                
+                document.querySelectorAll('.key-item').forEach(span => {
+                    span.addEventListener('click', (e) => {
+                        e.stopPropagation(); 
+                        span.classList.toggle('active');
+                    });
+                });
+            }
+        }
+
+        function removeSelectedKeys() {
+            const activeItems = keyInputArea.querySelectorAll('.key-item.active');
+            activeItems.forEach(item => {
+                key2Array = key2Array.filter(value => value !== item.textContent);
+            });
+            updateKeyDisplay();
+        }
+
+        // 點擊「儲存設定 (SET)」：將組合鍵轉為 16-bit 碼送往板子並寫入 NVS
+        function setShortcut() {
+            if (!selectedButtonId) {
+                alert("請先在上方點擊選擇一個目標按鈕！");
+                return;
+            }
+
+            const code = encodeKeys(key2Array);
+            const ch = document.getElementById('channelSelect').value;
+            const pf = document.getElementById('profileSelect').value;
+
+            // 確保 ID 字串安全編碼 (避免 B_R 等特殊字串引發請求中斷)
+            const safeId = encodeURIComponent(selectedButtonId);
+
+            fetch(`/api/setkey?ch=${ch}&pf=${pf}&id=${safeId}&code=${code}`)
+                .then(res => {
+                    if (!res.ok) throw new Error();
+                    const readable = decodeCode(code);
+                    renderButtonLabel(selectedButtonId, readable);
+                    isKey2Active = false;
+                    keyInputArea.classList.remove('active');
+                    updateKeyDisplay();
+                })
+                .catch(() => alert("儲存快捷鍵失敗，請確認與板子的連線！"));
+        }
+
+        // ==========================================
+        // 系統控制邏輯
+        // ==========================================
+        function sendReq(url) {
+            let btns = document.querySelectorAll('.sys-btn');
+            btns.forEach(b => b.disabled = true);
+            fetch(url).catch(err => console.log('設備忙碌'))
+                .finally(() => setTimeout(() => btns.forEach(b => b.disabled = false), 100));
+        }
+
+        function closeWindow() {
+            fetch('/exit', { keepalive: true }).catch(err => console.log('發送失敗'))
+                .finally(() => {
+                    window.open('', '_self').close();
+                    document.body.innerHTML = `
+                        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh;">
+                            <h2 style="color: #4CAF50;">安全關閉</h2>
+                            <p style="color: #aaa;">設備網路卡已成功關閉並切換回純藍牙模式。<br>您可以安全地關閉此分頁了。</p>
+                            <button onclick="window.close()" style="margin-top: 12px; padding: 8px 20px; font-size: 15px; cursor: pointer;">關閉分頁</button>
+                        </div>`;
+                });
+        }
+    </script>
+</body>
+</html>

@@ -363,6 +363,34 @@ uintptr_t z_mrsh_hwinfo_get_supported_reset_cause(uintptr_t arg1, uintptr_t arg2
          uintptr_t arg4, uintptr_t arg5, uintptr_t arg6, void *ssf);
 
 __weak ALIAS_OF(handler_no_syscall)
+uintptr_t z_mrsh_sensor_attr_set(uintptr_t arg1, uintptr_t arg2, uintptr_t arg3,
+         uintptr_t arg4, uintptr_t arg5, uintptr_t arg6, void *ssf);
+
+__weak ALIAS_OF(handler_no_syscall)
+uintptr_t z_mrsh_sensor_attr_get(uintptr_t arg1, uintptr_t arg2, uintptr_t arg3,
+         uintptr_t arg4, uintptr_t arg5, uintptr_t arg6, void *ssf);
+
+__weak ALIAS_OF(handler_no_syscall)
+uintptr_t z_mrsh_sensor_sample_fetch(uintptr_t arg1, uintptr_t arg2, uintptr_t arg3,
+         uintptr_t arg4, uintptr_t arg5, uintptr_t arg6, void *ssf);
+
+__weak ALIAS_OF(handler_no_syscall)
+uintptr_t z_mrsh_sensor_sample_fetch_chan(uintptr_t arg1, uintptr_t arg2, uintptr_t arg3,
+         uintptr_t arg4, uintptr_t arg5, uintptr_t arg6, void *ssf);
+
+__weak ALIAS_OF(handler_no_syscall)
+uintptr_t z_mrsh_sensor_channel_get(uintptr_t arg1, uintptr_t arg2, uintptr_t arg3,
+         uintptr_t arg4, uintptr_t arg5, uintptr_t arg6, void *ssf);
+
+__weak ALIAS_OF(handler_no_syscall)
+uintptr_t z_mrsh_sensor_get_decoder(uintptr_t arg1, uintptr_t arg2, uintptr_t arg3,
+         uintptr_t arg4, uintptr_t arg5, uintptr_t arg6, void *ssf);
+
+__weak ALIAS_OF(handler_no_syscall)
+uintptr_t z_mrsh_sensor_reconfigure_read_iodev(uintptr_t arg1, uintptr_t arg2, uintptr_t arg3,
+         uintptr_t arg4, uintptr_t arg5, uintptr_t arg6, void *ssf);
+
+__weak ALIAS_OF(handler_no_syscall)
 uintptr_t z_mrsh_uart_err_check(uintptr_t arg1, uintptr_t arg2, uintptr_t arg3,
          uintptr_t arg4, uintptr_t arg5, uintptr_t arg6, void *ssf);
 
@@ -963,6 +991,13 @@ const _k_syscall_handler_t _k_syscall_table[K_SYSCALL_LIMIT] = {
 	[K_SYSCALL_HWINFO_GET_RESET_CAUSE] = z_mrsh_hwinfo_get_reset_cause,
 	[K_SYSCALL_HWINFO_CLEAR_RESET_CAUSE] = z_mrsh_hwinfo_clear_reset_cause,
 	[K_SYSCALL_HWINFO_GET_SUPPORTED_RESET_CAUSE] = z_mrsh_hwinfo_get_supported_reset_cause,
+	[K_SYSCALL_SENSOR_ATTR_SET] = z_mrsh_sensor_attr_set,
+	[K_SYSCALL_SENSOR_ATTR_GET] = z_mrsh_sensor_attr_get,
+	[K_SYSCALL_SENSOR_SAMPLE_FETCH] = z_mrsh_sensor_sample_fetch,
+	[K_SYSCALL_SENSOR_SAMPLE_FETCH_CHAN] = z_mrsh_sensor_sample_fetch_chan,
+	[K_SYSCALL_SENSOR_CHANNEL_GET] = z_mrsh_sensor_channel_get,
+	[K_SYSCALL_SENSOR_GET_DECODER] = z_mrsh_sensor_get_decoder,
+	[K_SYSCALL_SENSOR_RECONFIGURE_READ_IODEV] = z_mrsh_sensor_reconfigure_read_iodev,
 	[K_SYSCALL_UART_ERR_CHECK] = z_mrsh_uart_err_check,
 	[K_SYSCALL_UART_POLL_IN] = z_mrsh_uart_poll_in,
 	[K_SYSCALL_UART_POLL_IN_U16] = z_mrsh_uart_poll_in_u16,
